@@ -1,0 +1,64 @@
+---
+###########################################################################################################
+# Create Palo Alto firewall object
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Create Palo Alto network object
+#
+# Requirements:
+# - ansible>=2.15.0
+# - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
+# - Python module pan-python (pip install pan-python)
+#
+###########################################################################################################
+
+- name: CREATE PALO ALTO OBJECT
+  hosts: "firewall"
+  connection: local
+  gather_facts: False
+
+  vars:
+    provider:
+      ip_address: "{{ ip_address }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  tasks:
+    - name: GET OUR SUBNET FROM INFOBLOX WAPI
+      uri:
+        url: "https://infoblox.zero-days.nl/wapi/v2.7/network"
+        method: GET
+        user: api-user
+        password: infoblox
+        status_code: 201, 302, 200
+        headers:
+            Content-Type: "application/json"
+        body:
+          comment: "bd_{{ function }}_{{ cust_environment }}"
+        body_format: json
+        validate_certs: no
+        return_content: yes
+      register: data
+
+    - name: SET SUBNET TO VARIABLE
+      set_fact:
+        subnet: "{{ data.json.0.network }}"
+
+    - name: DEBUG SHOW SUBNET
+      debug:
+        var: subnet
+
+    - name: CREATE NETWORK OBJECT
+      paloaltonetworks.panos.panos_address_object:
+        provider: '{{ provider }}'
+        name: "bd_{{ function }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
+        value: "{{ subnet }}"
+#        device_group: shared
+
+# TODO CONVERT FROM FIREWALL TO PANORAMA AND COMMIT
+ #   - name: COMMIT CHANGES BY API-USER ON PANORAMA
+ #     paloaltonetworks.panos.panos_commit_panorama:
+ #       provider: '{{ provider }}'
+ #       admins: ['api-user']
+ #       description: "ICD#{{ ticket_num }}"

@@ -1,0 +1,1 @@
+ansible-playbook infoblox.yml -i inventory --extra-vars "@./vars/shg_vars.yml"

@@ -1,0 +1,5 @@
+[nios:vars]
+ansible_python_interpreter="/home/sstigter/aci_ansible_learning_labs_code_samples/intro_module/venv/bin/python"
+
+[nios]
+infoblox.zero-days.nl

@@ -1,0 +1,7 @@
+---
+  tenant: ss_22
+  function: webserver
+  cust_environment: prd
+  os: windows
+  ticket_num: 12345
+  subnetmask: 28

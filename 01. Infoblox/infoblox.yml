@@ -1,0 +1,60 @@
+---
+###########################################################################################################
+# Create Infoblox network
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Query Infoblox for next available network in 10.223.0.0/16 automation network container
+#   depending on specified subnet mask size
+#     - /26 = Infoblox Automation oversized networks container - 10.223.0.0/17
+#     - /27 = Infoblox Automation oversized networks container - 10.223.0.0/17
+#     - /28 = Infoblox Automation regular networks container - 10.223.128.0/18
+#     - /29 = Infoblox Automation small networks container - 10.223.192.0/18
+# - Create new Infoblox network from network template
+#
+# Requirements:
+# - Python infoblox-client module (pip install infoblox-client)
+# - infoblox.nios_modules ansible module (ansible-galaxy collection install infoblox.nios_modules)
+#
+###########################################################################################################
+
+- hosts: nios
+  connection: local
+
+  tasks:
+    - name: SUBNET TO NETWORK CONTAINER MAPPING
+      set_fact:
+        network_containers:
+          26: "10.223.0.0/17"
+          27: "10.223.0.0/17"
+          28: "10.223.128.0/18"
+          29: "10.223.192.0/18"
+
+    - name: RETURN NEXT AVAILABLE IP SUBNET FROM NETWORK CONTAINER
+      set_fact:
+        networkaddr: "{{ lookup('nios_next_network', network_containers[subnetmask], cidr=subnetmask, provider=nios_provider) }}"
+        provider: "{{ nios_provider }}"
+      when: subnetmask in network_containers
+
+    - name: DEBUG SHOW SUBNET
+      debug:
+        var: networkaddr
+
+    - name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
+      nios_network:
+        network: "{{ item }}"
+        comment: "bd_{{ function }}_{{ cust_environment }}"
+        template: "network{{subnetmask}}"
+        state: present
+        provider: "{{nios_provider}}"
+      loop: "{{ networkaddr }}"
+
+# TODO RESTART INFOBLOX SERVICES
+#    - name: MAKE WAPI CALL TO RESTART INFOBLOX DHCP SERVICE
+#      uri:
+#        url: "https://infoblox.zero-days.nl/wapi/v2.7/grid/b25lLmNsdXN0ZXIkMA:Infoblox?_function=restartservices?services=DHCP"
+#        method: POST
+#        user: admin
+#        password: infoblox
+#        status_code: 201, 302, 200
+#        validate_certs: no

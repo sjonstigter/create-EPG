@@ -1,0 +1,5 @@
+---
+nios_provider:
+  host: infoblox.zero-days.nl
+  username: admin
+  password: infoblox
