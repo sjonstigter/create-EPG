@@ -28,12 +28,17 @@
   connection: local
   gather_facts: False
 
+  vars:
+    network:
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+
   tasks:
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -47,8 +52,8 @@
     - name: CREATE BRIDGE DOMAIN SUBNET
       cisco.aci.aci_bd_subnet:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -61,8 +66,8 @@
     - name: ADD DHCP LABEL
       cisco.aci.aci_bd_dhcp_label:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -74,8 +79,8 @@
     - name: ASSOCIATE BD TO L3OUT
       cisco.aci.aci_bd_to_l3out:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -86,8 +91,8 @@
     - name: CREATE APPLICATION PROFILE
       cisco.aci.aci_ap:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
@@ -97,8 +102,8 @@
     - name: CREATE EPG
       cisco.aci.aci_epg:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
@@ -111,8 +116,8 @@
     - name: BIND EPG TO VM DOMAIN
       cisco.aci.aci_epg_to_domain:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
@@ -127,8 +132,8 @@
     - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
       cisco.aci.aci_epg_to_contract_master:
         host: "{{ inventory_hostname }}"
-        username: '{{ lookup(env, "ANSIBLE_NET_USERNAME" }}'
-        password: '{{ lookup(env, "ANSIBLE_NET_PASS" }}'
+        username: "{{ username }}"
+        password: "{{ password }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
