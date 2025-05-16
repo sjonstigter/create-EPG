@@ -33,30 +33,6 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
-    - name: GET OUR SUBNET FROM INFOBLOX WAPI
-      uri:
-        url: "https://infoblox.zero-days.nl/wapi/v2.7/network"
-        method: GET
-        user: api-user
-        password: infoblox
-        status_code: 201, 302, 200
-        headers:
-            Content-Type: "application/json"
-        body:
-          comment: "bd_{{ function }}_{{ cust_environment }}"
-        body_format: json
-        validate_certs: no
-        return_content: yes
-      register: data
-
-    - name: SET SUBNET TO VARIABLE
-      set_fact:
-        subnet: "{{ data.json.0.network }}"
-
-    - name: DEBUG SHOW SUBNET
-      debug:
-        var: subnet
-
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
         host: "{{ inventory_hostname }}"
