@@ -2,3 +2,4 @@
 collections:
   - name: cisco.aci
   - name: infoblox.nios_modules
+  - name: paloaltonetworks.panos
