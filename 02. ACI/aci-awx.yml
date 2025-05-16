@@ -82,7 +82,7 @@
         tenant: "common"
         bd: "bd_{{ function }}_{{ cust_environment }}"
         gateway: "{{ subnet | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('-2') }}" # Get last IP in range for gateway address
-        mask: "{{ subnet | ansible.utils.ipaddr('host/prefix') | ansible.utils.ipaddr('prefix') }}" # Extract subnet prefix
+        mask: "{{ subnetmask }}"
         scope: "public"
         annotation: ""
 
