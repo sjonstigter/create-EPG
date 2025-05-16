@@ -32,8 +32,8 @@
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -47,8 +47,8 @@
     - name: CREATE BRIDGE DOMAIN SUBNET
       cisco.aci.aci_bd_subnet:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -61,8 +61,8 @@
     - name: ADD DHCP LABEL
       cisco.aci.aci_bd_dhcp_label:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -74,8 +74,8 @@
     - name: ASSOCIATE BD TO L3OUT
       cisco.aci.aci_bd_to_l3out:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "common"
@@ -86,8 +86,8 @@
     - name: CREATE APPLICATION PROFILE
       cisco.aci.aci_ap:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
@@ -97,8 +97,8 @@
     - name: CREATE EPG
       cisco.aci.aci_epg:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
@@ -111,8 +111,8 @@
     - name: BIND EPG TO VM DOMAIN
       cisco.aci.aci_epg_to_domain:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
@@ -127,8 +127,8 @@
     - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
       cisco.aci.aci_epg_to_contract_master:
         host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_pass }}"
+        username: "{{ ANSIBLE_NET_USERNAME }}"
+        password: "{{ ANSIBLE_NET_PASS }}"
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
