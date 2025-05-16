@@ -1,0 +1,167 @@
+---
+###########################################################################################################
+# Create Cisco ACI EPG
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Query Infoblox WAPI for network subnet for Bridge Domain name in comment field
+# - Create Bridge Domain in common:default
+# - Create Subnet/gateway using ansible.utils.ipaddr
+# - Add DHCP relay label to BD
+# - Associate L3out to BD
+# - Create ANP
+# - Create EPG
+# - Bind VMM to EPG
+# - Apply Contract Masters to EPG (linux/windows) - TODO: Add LB
+#
+# Requirements:
+# - ansible>=2.4.2.0
+# - cisco.aci ansible module (ansible-galaxy collection install cisco.aci)
+# - ansible.utils module (ansible-galaxy collection install ansible.utils)
+# - Python netaddr (pip install netaddr) - used for converting network range to gateway + cidr subnet
+#   and used by ansible.utils.ipaddr
+#
+###########################################################################################################
+
+- name: CREATE ACI EPG
+  hosts: apic
+  connection: local
+  gather_facts: False
+
+  vars:
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+
+  tasks:
+    - name: GET OUR SUBNET FROM INFOBLOX WAPI
+      uri:
+        url: "https://infoblox.zero-days.nl/wapi/v2.7/network"
+        method: GET
+        user: api-user
+        password: infoblox
+        status_code: 201, 302, 200
+        headers:
+            Content-Type: "application/json"
+        body:
+          comment: "bd_{{ function }}_{{ cust_environment }}"
+        body_format: json
+        validate_certs: no
+        return_content: yes
+      register: data
+
+    - name: SET SUBNET TO VARIABLE
+      set_fact:
+        subnet: "{{ data.json.0.network }}"
+
+    - name: DEBUG SHOW SUBNET
+      debug:
+        var: subnet
+
+    - name: CREATE BRIDGE DOMAIN
+      cisco.aci.aci_bd:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "bd_{{ function }}_{{ cust_environment }}"
+        vrf: "default"
+        description: "ICD#{{ ticket_num }}"
+        annotation: ""
+        arp_flooding: "true"
+        endpoint_move_detect: "garp"
+
+    - name: CREATE BRIDGE DOMAIN SUBNET
+      cisco.aci.aci_bd_subnet:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "bd_{{ function }}_{{ cust_environment }}"
+        gateway: "{{ subnet | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('-2') }}" # Get last IP in range for gateway address
+        mask: "{{ subnet | ansible.utils.ipaddr('host/prefix') | ansible.utils.ipaddr('prefix') }}" # Extract subnet prefix
+        scope: "public"
+        annotation: ""
+
+    - name: ADD DHCP LABEL
+      cisco.aci.aci_bd_dhcp_label:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "bd_{{ function }}_{{ cust_environment }}"
+        dhcp_label: "dhcp_relay1" # Set correct dhcp relay label
+        scope: "infra"
+        annotation: ""
+
+    - name: ASSOCIATE BD TO L3OUT
+      cisco.aci.aci_bd_to_l3out:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "bd_{{ function }}_{{ cust_environment }}"
+        l3out: "l3out_common-default"
+        suppress_verification: "true" # for testing purpose only
+
+    - name: CREATE APPLICATION PROFILE
+      cisco.aci.aci_ap:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "anp_{{ function }}"
+        annotation: ""
+
+    - name: CREATE EPG
+      cisco.aci.aci_epg:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "anp_{{ function }}"
+        epg: "epg_{{ function }}_{{ cust_environment }}"
+        bd: "bd_{{ function }}_{{ cust_environment }}"
+        description: "ICD#{{ ticket_num }}"
+        annotation: ""
+
+    - name: BIND EPG TO VM DOMAIN
+      cisco.aci.aci_epg_to_domain:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "anp_{{ function }}"
+        epg: "epg_{{ function }}_{{ cust_environment }}"
+        domain: "prod_vswitch" # Set correct VMM domain name
+        domain_type: "vmm"
+        vm_provider: "vmware"
+        encap_mode: "auto"
+        # enhanced_lag_policy: "lacp_vmm_shg" # TODO: enable lacp lag mode here
+
+    - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
+      cisco.aci.aci_epg_to_contract_master:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "anp_{{ function }}"
+        epg: "epg_{{ function }}_{{ cust_environment }}"
+        contract_master_ap: "anp_contract_masters"
+        contract_master_epg: "epg_cm_{{ os }}" # Set correct epg_cm name
+        suppress_verification: "true" # for testing purpose only
