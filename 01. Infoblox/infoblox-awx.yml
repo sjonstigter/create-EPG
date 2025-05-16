@@ -1,0 +1,120 @@
+---
+###########################################################################################################
+# Create Infoblox network
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Vind alle /24 netwerk containers voor onze gekozen dienst.
+# - Indien meerdere netwerk containers: Selecteer hoogste /24 netwerk container voor onze dienst dmv 
+#   subnet-ID extensible attribute.
+# - Als /24 netwerk container vol is registreer nieuw /24 netwerk vanuit /16 parent netwerk container 
+#   en stel subnet-ID extensible attribute in.
+# - Maak nieuw netwerk aan met gekozen subnet cidr (bv /26, /27, /28 of /29) in gekozen dient netwerk 
+#   container.
+#
+# Requirements:
+# - Python infoblox-client module (pip install infoblox-client)
+# - infoblox.nios_modules ansible module (ansible-galaxy collection install infoblox.nios_modules)
+#
+###########################################################################################################
+
+- hosts: nios
+  connection: local
+  name: ALLOCATE INFOBLOX SUBNET
+
+  vars:
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+
+  tasks:
+    - name: SET TENANT CONTAINER DEFINITION
+      set_fact:
+        tennant_container:
+          tn_shg: "10.221.0.0/16"
+          tn_common: "10.229.0.0/16"
+
+    - name: FIND NETWORK CONTAINER FOR OUR ANP
+      set_fact: # TODO: Fix static comment, set to variable
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': 'webserver'}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider) }}"
+
+    - name: SHOW ANP RESULT
+      debug:
+        var: network_container_result
+
+    - name: FILTER CONTAINERS WHERE SELECTED ENVIRONMENT = '{{ cust_environment }}'
+      set_fact:
+        env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+
+    - name: SHOW ENVIRONMENT FILTERED CONTAINERS
+      debug:
+        var: env_network_containers
+
+    - name: FIND NETWORK CONTAINER WITH HIGHEST SUBNET-ID
+      set_fact:
+        max_subnet: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
+
+    - name: SHOW NETWORK CONTAINER
+      debug:
+        var: max_subnet.network
+
+    - name: RETURN NEXT AVAILABLE IP SUBNET FROM NETWORK CONTAINER
+      block:
+        - name: ATTEMPT TO GET NEXT AVAILABLE SUBNET FROM CONTAINER
+          set_fact:
+            networkaddr: "{{ lookup('nios_next_network', max_subnet.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
+          register: subnet_lookup_result
+
+        - name: HANDLE NETWORK CONTAINER FULL CONDITION
+          set_fact:
+            subnet_full: true
+          when: networkaddr == '' or networkaddr is not defined
+
+    - name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
+      set_fact: # TODO: fix static 10.221.0.0/16, retrieve parent container somehow
+        containeraddr: "{{ lookup('nios_next_network', '10.221.0.0/16', cidr=24, provider=nios_provider) }}"
+#        containeraddr: "{{ lookup('nios_next_network', tennant_container['tn_'tenant], cidr=24, provider=nios_provider) }}"
+      when: subnet_full is true
+
+    - name: SHOW NEW CONTAINER
+      debug:
+        var: containeraddr
+      when: subnet_full is true
+
+    - name: CREATE NEW CONTAINER 
+      nios_network:
+        network: "{{ containeraddr[0] }}" # Dereference the returned list to a string by adding [0]
+        comment: "anp_{{ function }}"
+        container: true
+        extattrs:
+          ANP: "anp_{{ function }}"
+          subnet-ID: "{{ max_subnet.extattrs['subnet-ID'] | int + 1 }}" # Increase max_subnet extattr by 1
+          env: "{{ cust_environment }}"
+        state: present
+        provider: "{{ nios_provider }}"
+      when: subnet_full is true
+
+    - name: RETURN NEXT AVAILABLE IP SUBNET FROM NEW NETWORK CONTAINER
+      set_fact:
+        networkaddr: "{{ lookup('nios_next_network', containeraddr, cidr=subnetmask, provider=nios_provider) }}"
+      when: subnet_full is true
+
+    - name: SHOW NEW NETWORKADDR
+      debug:
+        var: networkaddr
+
+    - name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
+      nios_network:
+        network: "{{ networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
+        comment: "bd_{{ function }}_{{ cust_environment }}"
+        template: "network{{subnetmask}}"
+        state: present
+        provider: "{{ nios_provider }}"
+
+#    - name: RESTART INFOBLOX DHCP SERVICE
+#      nios_restartservices:
+#        services:
+#          - DHCP
+#        groups: 
+#        members:
+#        mode: GROUPED # or SEQUENTIAL
+#        provider: "{{ nios_provider }}"
