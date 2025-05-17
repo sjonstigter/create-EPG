@@ -29,6 +29,11 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
+
+    - name: FORCE INSTALL PIP INFOBLOX
+      ansible.builtin.pip:
+        name: infoblox-client
+
     - name: SET TENANT CONTAINER DEFINITION
       set_fact:
         tennant_container:
