@@ -30,9 +30,13 @@
 
   tasks:
 
-    - name: Show Python path
+    - name: List installed pip packages
+      ansible.builtin.command: pip list
+      register: pip_output
+
+    - name: Show pip list
       ansible.builtin.debug:
-        var: ansible_playbook_python
+        var: pip_output.stdout_lines
 
     - name: SET TENANT CONTAINER DEFINITION
       set_fact:
