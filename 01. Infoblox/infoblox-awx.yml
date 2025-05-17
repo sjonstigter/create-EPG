@@ -29,6 +29,11 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
+
+    - name: Show Python path
+      ansible.builtin.debug:
+        var: ansible_playbook_python
+
     - name: SET TENANT CONTAINER DEFINITION
       set_fact:
         tennant_container:
