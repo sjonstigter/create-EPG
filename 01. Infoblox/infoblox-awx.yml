@@ -27,17 +27,9 @@
       host: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+      ssl_verify: false
 
   tasks:
-
-    - name: List installed pip packages
-      ansible.builtin.command: pip list
-      register: pip_output
-
-    - name: Show pip list
-      ansible.builtin.debug:
-        var: pip_output.stdout_lines
-
     - name: SET TENANT CONTAINER DEFINITION
       set_fact:
         tennant_container:
