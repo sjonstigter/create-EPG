@@ -113,6 +113,11 @@
         state: present
         provider: "{{ nios_provider }}"
 
+    - name: SET STAT THE NETWORK ADDRESS FOR FURTHER WORKFLOW
+      ansible.builtin.set_stats:
+        data:
+          subnet: "{{ networkaddr[0] }}"
+
 #    - name: RESTART INFOBLOX DHCP SERVICE
 #      nios_restartservices:
 #        services:
