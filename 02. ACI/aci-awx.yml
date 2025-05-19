@@ -141,3 +141,10 @@
         contract_master_ap: "anp_contract_masters"
         contract_master_epg: "epg_cm_{{ os }}" # Set correct epg_cm name
         suppress_verification: "true" # for testing purpose only
+
+    - name: SET STAT THE TENNANT-ANP-EPG FOR FURTHER WORKFLOW
+      ansible.builtin.set_stats:
+        data:
+          tennant: "{{ tenant }}"
+          anp: "anp_{{ function }}"
+          epg: "epg_{{ function }}_{{ cust_environment }}"
