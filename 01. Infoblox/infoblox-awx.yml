@@ -98,7 +98,7 @@
 
     - name: RETURN NEXT AVAILABLE IP SUBNET FROM NEW NETWORK CONTAINER
       set_fact:
-        networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr, cidr=subnetmask, provider=nios_provider) }}"
+        networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr, cidr=28, provider=nios_provider) }}"
       when: subnet_full is true
 
     - name: SHOW NEW NETWORKADDR
