@@ -86,7 +86,7 @@
     - name: CREATE NEW CONTAINER 
       infoblox.nios_modules.nios_network:
         network: "{{ containeraddr[0] }}" # Dereference the returned list to a string by adding [0]
-        comment: "anp_{{ function }}"
+        comment: "{{ function }}"
         container: true
         extattrs:
           ANP: "{{ function }}"
