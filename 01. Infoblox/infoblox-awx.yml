@@ -85,7 +85,7 @@
 
     - name: CREATE NEW CONTAINER 
       infoblox.nios_modules.nios_network:
-        network: "{{ containeraddr }}" # Dereference the returned list to a string by adding [0]
+        network: "{{ containeraddr | string }}" # Dereference the returned list to a string by adding [0]
         comment: "{{ function }}"
         container: true
         extattrs:
