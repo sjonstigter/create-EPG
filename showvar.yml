@@ -1,0 +1,17 @@
+---
+- name: DISPLAY PASSED VARIABLES
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: SHOW TENANT
+      debug:
+        var: tenant
+
+    - name: SHOW ANP
+      debug:
+        var: anp
+
+    - name: SHOW EPG
+      debug:
+        var: epg
