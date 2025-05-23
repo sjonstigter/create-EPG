@@ -145,6 +145,6 @@
     - name: SET STAT THE TENNANT-ANP-EPG FOR FURTHER WORKFLOW
       ansible.builtin.set_stats:
         data:
-          tennant: "{{ tenant }}"
+          tenant: "{{ tenant }}"
           anp: "anp_{{ function }}"
           epg: "epg_{{ function }}_{{ cust_environment }}"
