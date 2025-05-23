@@ -33,8 +33,9 @@
     - name: SET TENANT CONTAINER DEFINITION
       set_fact:
         tennant_container:
-          tn_shg: "10.221.0.0/16"
-          tn_common: "10.229.0.0/16"
+          shg: "10.221.0.0/16"
+          common: "10.229.0.0/16"
+          ss_22: "10.221.0.0/16"
 
     - name: FIND NETWORK CONTAINER FOR OUR ANP
       set_fact: # TODO: Fix static comment, set to variable
@@ -75,7 +76,7 @@
     - name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
       set_fact: # TODO: fix static 10.221.0.0/16, retrieve parent container somehow
         containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', '10.221.0.0/16', cidr=24, provider=nios_provider) }}"
-#        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container['tn_'tenant], cidr=24, provider=nios_provider) }}"
+#        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container[tenant], cidr=24, provider=nios_provider) }}"
       when: subnet_full is true
 
     - name: SHOW NEW CONTAINER
