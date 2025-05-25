@@ -46,7 +46,7 @@
       debug:
         var: network_container_result
 
-    - name: FILTER CONTAINERS WHERE SELECTED ENVIRONMENT = '{{ cust_environment }}'
+    - name: FILTER CONTAINERS WHERE SELECTED ENVIRONMENT = #'{{ cust_environment }}'
       set_fact:
         env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
 
