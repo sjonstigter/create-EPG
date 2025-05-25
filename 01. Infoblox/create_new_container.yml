@@ -1,7 +1,7 @@
 - name: CREATE NEW NETWORK CONTAINER
   infoblox.nios_modules.nios_network:
     network: "{{ new_container_network }}"
-    comment: "anp_{{ function }}"
+    comment: "{{ function }}"
     container: true
     extattrs:
       ANP: "{{ function }}"
