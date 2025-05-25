@@ -42,7 +42,6 @@
 #        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': 'webserver'}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider) }}"
         network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider) }}"
 
-
     - name: SHOW ANP RESULT
       debug:
         var: network_container_result
