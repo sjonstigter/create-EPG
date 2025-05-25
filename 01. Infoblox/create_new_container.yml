@@ -2,12 +2,10 @@
       set_fact: # TODO: fix static 10.221.0.0/16, retrieve parent container somehow
         containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', '10.221.0.0/16', cidr=24, provider=nios_provider) }}"
 #        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container[tenant], cidr=24, provider=nios_provider) }}"
-      when: subnet_full is true
 
     - name: SHOW NEW CONTAINER
       debug:
         var: containeraddr
-      when: subnet_full is true
 
 - name: CREATE NEW NETWORK CONTAINER
   infoblox.nios_modules.nios_network:
