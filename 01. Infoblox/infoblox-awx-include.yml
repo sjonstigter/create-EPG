@@ -40,7 +40,7 @@
     - name: FIND NETWORK CONTAINER FOR OUR ANP
       set_fact: # TODO: Fix static comment, set to variable
 #        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': 'webserver'}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider) }}"
-        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider) }}"
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider wantlist=True) }}"
 
     - name: SHOW ANP RESULT
       debug:
