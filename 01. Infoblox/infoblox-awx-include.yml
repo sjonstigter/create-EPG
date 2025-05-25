@@ -73,16 +73,16 @@
             subnet_full: true
           when: networkaddr == '' or networkaddr is not defined
 
-    - name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
-      set_fact: # TODO: fix static 10.221.0.0/16, retrieve parent container somehow
-        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', '10.221.0.0/16', cidr=24, provider=nios_provider) }}"
-#        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container[tenant], cidr=24, provider=nios_provider) }}"
-      when: subnet_full is true
+#    - name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
+#      set_fact: # TODO: fix static 10.221.0.0/16, retrieve parent container somehow
+#        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', '10.221.0.0/16', cidr=24, provider=nios_provider) }}"
+##        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container[tenant], cidr=24, provider=nios_provider) }}"
+#      when: subnet_full is true
 
-    - name: SHOW NEW CONTAINER
-      debug:
-        var: containeraddr
-      when: subnet_full is true
+#    - name: SHOW NEW CONTAINER
+#      debug:
+#        var: containeraddr
+#      when: subnet_full is true
 
 #    - name: CREATE NEW CONTAINER 
 #      infoblox.nios_modules.nios_network:
@@ -99,9 +99,6 @@
 
     - name: INCLUDE TASK TO CREATE NEW CONTAINER
       ansible.builtin.include_tasks: create_new_container.yml
-      vars:
-        new_container_network: "{{ containeraddr[0] }}"
-        new_subnet_id: "{{ max_subnet.extattrs['subnet-ID'] | int + 1 }}"
       when: subnet_full is true
 
     - name: RETURN NEXT AVAILABLE IP SUBNET FROM NEW NETWORK CONTAINER
