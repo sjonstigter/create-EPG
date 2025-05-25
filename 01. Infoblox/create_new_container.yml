@@ -1,11 +1,22 @@
+    - name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
+      set_fact: # TODO: fix static 10.221.0.0/16, retrieve parent container somehow
+        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', '10.221.0.0/16', cidr=24, provider=nios_provider) }}"
+#        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container[tenant], cidr=24, provider=nios_provider) }}"
+      when: subnet_full is true
+
+    - name: SHOW NEW CONTAINER
+      debug:
+        var: containeraddr
+      when: subnet_full is true
+
 - name: CREATE NEW NETWORK CONTAINER
   infoblox.nios_modules.nios_network:
-    network: "{{ new_container_network }}"
+    network: "{{ containeraddr[0] }}" # Dereference the returned list to a string by adding [0]
     comment: "{{ function }}"
     container: true
     extattrs:
       ANP: "{{ function }}"
-      subnet-ID: "{{ new_subnet_id }}"
+      subnet-ID: "{{ max_subnet.extattrs['subnet-ID'] | int + 1 }}" # Increase max_subnet extattr by 1
       env: "{{ cust_environment }}"
     state: present
     provider: "{{ nios_provider }}"
