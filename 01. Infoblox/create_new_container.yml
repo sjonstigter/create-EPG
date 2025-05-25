@@ -1,0 +1,11 @@
+- name: CREATE NEW NETWORK CONTAINER
+  infoblox.nios_modules.nios_network:
+    network: "{{ new_container_network }}"
+    comment: "anp_{{ function }}"
+    container: true
+    extattrs:
+      ANP: "{{ function }}"
+      subnet-ID: "{{ new_subnet_id }}"
+      env: "{{ cust_environment }}"
+    state: present
+    provider: "{{ nios_provider }}"
