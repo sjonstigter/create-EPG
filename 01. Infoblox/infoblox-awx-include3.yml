@@ -63,6 +63,20 @@
       set_fact:
         env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
 
+    - name: HANDLE SERVICE HAS NO CONTAINER FOR ENVIRONMENT
+      set_fact:
+        has_no_environment: true
+      when: env_network_containers is not defined or env_network_containers | length == 0
+
+    - name: INCLUDE TASK TO CREATE NEW CONTAINER (no environment)
+      ansible.builtin.include_tasks: create_new_container.yml
+      when: has_no_environment is true
+
+    - name: SET NEW NETWORK CONTAINER FOR OUR ANP (no environment)
+      set_fact:
+        env_network_containers: "{{ containeraddr[0] }}"
+      when: has_no_environment is true
+
     - name: SHOW ENVIRONMENT FILTERED CONTAINERS
       debug:
         var: env_network_containers
