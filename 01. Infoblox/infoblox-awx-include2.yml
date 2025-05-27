@@ -44,7 +44,7 @@
     - name: HANDLE SERVICE HAS NO CONTAINER
       set_fact:
         has_no_container: true
-      when: network_container_result == '' or network_container_result is not defined
+      when: network_container_result is not defined or network_container_result | length == 0
 
     - name: INCLUDE TASK TO CREATE NEW CONTAINER
       ansible.builtin.include_tasks: create_new_container.yml
