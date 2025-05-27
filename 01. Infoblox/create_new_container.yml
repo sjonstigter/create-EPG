@@ -13,7 +13,8 @@
     container: true
     extattrs:
       ANP: "{{ function }}"
-      subnet-ID: "{{ max_subnet.extattrs['subnet-ID'] | int + 1 }}" # Increase max_subnet extattr by 1
+#      subnet-ID: "{{ max_subnet.extattrs['subnet-ID'] | int + 1 }}" # Increase max_subnet extattr by 1
+      subnet-ID: "{{ (max_subnet.extattrs['subnet-ID'] | default(0)) | int + 1 }}"
       env: "{{ cust_environment }}"
     state: present
     provider: "{{ nios_provider }}"
