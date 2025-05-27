@@ -42,6 +42,15 @@
 #        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': 'webserver'}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider) }}"
         network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
+    - name: HANDLE SERVICE HAS NO CONTAINER
+      set_fact:
+        has_no_container: true
+      when: network_container_result == '' or network_container_result is not defined
+
+    - name: INCLUDE TASK TO CREATE NEW CONTAINER
+      ansible.builtin.include_tasks: create_new_container.yml
+      when: has_no_container is true
+
     - name: SHOW ANP RESULT
       debug:
         var: network_container_result
@@ -73,30 +82,6 @@
           set_fact:
             subnet_full: true
           when: networkaddr == '' or networkaddr is not defined
-
-#    - name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
-#      set_fact: # TODO: fix static 10.221.0.0/16, retrieve parent container somehow
-#        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', '10.221.0.0/16', cidr=24, provider=nios_provider) }}"
-##        containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container[tenant], cidr=24, provider=nios_provider) }}"
-#      when: subnet_full is true
-
-#    - name: SHOW NEW CONTAINER
-#      debug:
-#        var: containeraddr
-#      when: subnet_full is true
-
-#    - name: CREATE NEW CONTAINER 
-#      infoblox.nios_modules.nios_network:
-#        network: "{{ containeraddr[0] }}" # Dereference the returned list to a string by adding [0]
-#        comment: "{{ function }}"
-#        container: true
-#        extattrs:
-#          ANP: "{{ function }}"
-#          subnet-ID: "{{ max_subnet.extattrs['subnet-ID'] | int + 1 }}" # Increase max_subnet extattr by 1
-#          env: "{{ cust_environment }}"
-#        state: present
-#        provider: "{{ nios_provider }}"
-#      when: subnet_full is true
 
     - name: INCLUDE TASK TO CREATE NEW CONTAINER
       ansible.builtin.include_tasks: create_new_container.yml
