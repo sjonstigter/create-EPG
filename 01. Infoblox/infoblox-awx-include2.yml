@@ -52,7 +52,7 @@
 
     - name: SET NEW NETWORK CONTAINER FOR OUR ANP
       set_fact:
-        network_container_result: containeraddr
+        network_container_result: "{{ containeraddr[0] }}"
       when: has_no_container is true
       
     - name: SHOW ANP RESULT
