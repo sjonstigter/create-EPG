@@ -51,10 +51,10 @@
       ansible.builtin.include_tasks: create_new_container.yml
       when: has_no_container is true
 
-    - name: SET NEW NETWORK CONTAINER FOR OUR ANP
-      set_fact:
-        network_container_result: "{{ containeraddr }}"
-      when: has_no_container is true
+#    - name: SET NEW NETWORK CONTAINER FOR OUR ANP
+#      set_fact:
+#        network_container_result: "{{ containeraddr }}"
+#      when: has_no_container is true
 
     - name: RERUN FIND NETWORK CONTAINER FOR OUR ANP
       set_fact: # TODO: Fix static comment, set to variable
