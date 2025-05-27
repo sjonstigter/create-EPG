@@ -1,3 +1,4 @@
+
 ---
 ###########################################################################################################
 # Create Infoblox network
@@ -46,7 +47,7 @@
         has_no_container: true
       when: network_container_result is not defined or network_container_result | length == 0
 
-    - name: INCLUDE TASK TO CREATE NEW CONTAINER (no service)
+    - name: INCLUDE TASK TO CREATE NEW CONTAINER
       ansible.builtin.include_tasks: create_new_container.yml
       when: has_no_container is true
 
@@ -87,7 +88,7 @@
             subnet_full: true
           when: networkaddr == '' or networkaddr is not defined
 
-    - name: INCLUDE TASK TO CREATE NEW CONTAINER (container full)
+    - name: INCLUDE TASK TO CREATE NEW CONTAINER
       ansible.builtin.include_tasks: create_new_container.yml
       when: subnet_full is true
 
