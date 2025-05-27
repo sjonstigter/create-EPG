@@ -1,0 +1,144 @@
+---
+###########################################################################################################
+# Create Infoblox network
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Vind alle /24 netwerk containers voor onze gekozen dienst.
+# - Indien meerdere netwerk containers: Selecteer hoogste /24 netwerk container voor onze dienst dmv 
+#   subnet-ID extensible attribute.
+# - Als /24 netwerk container vol is registreer nieuw /24 netwerk vanuit /16 parent netwerk container 
+#   en stel subnet-ID extensible attribute in.
+# - Maak nieuw netwerk aan met gekozen subnet cidr (bv /26, /27, /28 of /29) in gekozen dient netwerk 
+#   container.
+#
+# Requirements:
+# - Python infoblox-client module (pip install infoblox-client)
+# - infoblox.nios_modules ansible module (ansible-galaxy collection install infoblox.nios_modules)
+#
+###########################################################################################################
+
+- hosts: nios
+  connection: local
+  name: ALLOCATE INFOBLOX SUBNET
+
+  vars:
+    nios_provider:
+      host: "{{ inventory_hostname }}"
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+      ssl_verify: false
+
+  tasks:
+    - name: SET TENANT CONTAINER DEFINITION
+      set_fact:
+        tennant_container:
+          shg: "10.221.0.0/16"
+          common: "10.229.0.0/16"
+          ss_22: "10.221.0.0/16"
+
+    - name: FIND NETWORK CONTAINER FOR OUR ANP
+      set_fact: # TODO: Fix static comment, set to variable
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+    - name: HANDLE SERVICE HAS NO CONTAINER
+      set_fact:
+        has_no_container: true
+      when: network_container_result is not defined or network_container_result | length == 0
+
+    - name: INCLUDE TASK TO CREATE NEW CONTAINER
+      ansible.builtin.include_tasks: create_new_container.yml
+      when: has_no_container is true
+
+    - name: RERUN FIND NETWORK CONTAINER FOR OUR ANP
+      set_fact: # TODO: Fix static comment, set to variable
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+      when: has_no_container is true
+
+    - name: SHOW ANP RESULT
+      debug:
+        var: network_container_result
+
+    - name: FILTER CONTAINERS WHERE SELECTED ENVIRONMENT = #'{{ cust_environment }}'
+      set_fact:
+        env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+
+## NEW BIT
+    - name: HANDLE ENVIRONMENT HAS NO CONTAINER
+      set_fact:
+        has_no_env_container: true
+      when: env_network_containers is not defined or env_network_containers | length == 0
+
+    - name: INCLUDE TASK TO CREATE NEW CONTAINER (environment)
+      ansible.builtin.include_tasks: create_new_container.yml
+      when: has_no_env_container is true
+
+    - name: RERUN FIND NETWORK CONTAINER FOR OUR ANP
+      set_fact: # TODO: Fix static comment, set to variable
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+      when: has_no_env_container is true
+
+    - name: RERUN FILTER CONTAINERS WHERE SELECTED ENVIRONMENT = #'{{ cust_environment }}'
+      set_fact:
+        env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+      when: has_no_env_container is true
+## END NEW BIT
+
+    - name: SHOW ENVIRONMENT FILTERED CONTAINERS
+      debug:
+        var: env_network_containers
+
+    - name: FIND NETWORK CONTAINER WITH HIGHEST SUBNET-ID
+      set_fact:
+        max_subnet: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
+
+    - name: SHOW NETWORK CONTAINER
+      debug:
+        var: max_subnet.network
+
+    - name: RETURN NEXT AVAILABLE IP SUBNET FROM NETWORK CONTAINER
+      block:
+        - name: ATTEMPT TO GET NEXT AVAILABLE SUBNET FROM CONTAINER
+          set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', max_subnet.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
+          register: subnet_lookup_result
+
+        - name: HANDLE NETWORK CONTAINER FULL CONDITION
+          set_fact:
+            subnet_full: true
+          when: networkaddr == '' or networkaddr is not defined
+
+    - name: INCLUDE TASK TO CREATE NEW CONTAINER
+      ansible.builtin.include_tasks: create_new_container.yml
+      when: subnet_full is true
+
+    - name: RETURN NEXT AVAILABLE IP SUBNET FROM NEW NETWORK CONTAINER
+      set_fact:
+        networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0], cidr=subnetmask, provider=nios_provider) }}"
+      when: subnet_full is true
+
+    - name: SHOW NEW NETWORKADDR
+      debug:
+        var: networkaddr
+
+    - name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
+        comment: "bd_{{ function }}_{{ cust_environment }}"
+        template: "network{{subnetmask}}"
+        state: present
+        provider: "{{ nios_provider }}"
+
+    - name: SET STAT THE NETWORK ADDRESS FOR FURTHER WORKFLOW
+      ansible.builtin.set_stats:
+        data:
+          subnet: "{{ networkaddr[0] }}"
+
+#    - name: RESTART INFOBLOX DHCP SERVICE
+#      nios_restartservices:
+#        services:
+#          - DHCP
+#        groups: 
+#        members:
+#        mode: GROUPED # or SEQUENTIAL
+#        provider: "{{ nios_provider }}"
