@@ -50,11 +50,6 @@
       set_fact:
         anp_name: "anp_{{ function }}"
       when: toolserver is false
-
-    - name: APPEND LB PREFIX WHEN EPG IS LB
-      set_fact:
-        function: "{{ function }}_lb"
-      when: loadbalancer is true
       
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
