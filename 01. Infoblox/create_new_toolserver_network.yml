@@ -19,7 +19,7 @@
 
 - name: RETURN NEXT AVAILABLE IP SUBNET FROM TOOLSERVER CONTAINER
   set_fact:
-    toolserver_networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', toolserver_container_result.network], cidr='/29', provider=nios_provider) }}"
+    toolserver_networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', toolserver_container_result[0].network, cidr='/29', provider=nios_provider) }}"
 
 - name: SHOW NEW NETWORKADDR
   debug:
