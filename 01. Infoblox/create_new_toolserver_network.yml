@@ -1,0 +1,34 @@
+- name: SET TOOLSERVER CONTAINER DEFINITION
+  set_fact:
+    tennant_toolserver:
+      shg: "shg_toolservers"
+      common: "sdi_toolservers"
+      ss_22: "shg_toolservers"
+
+- name: SELECT TOOLSERVER CONTAINER FOR TENANT
+  set_fact:
+    toolserver_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': tennant_toolserver[tenant]}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+- name: RETURN NEXT AVAILABLE IP SUBNET FROM TOOLSERVER CONTAINER
+  set_fact:
+    toolserver_networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', toolserver_container_result, cidr=/29, provider=nios_provider) }}"
+
+- name: SHOW NEW NETWORKADDR
+  debug:
+    var: toolserver_networkaddr
+
+- name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
+  infoblox.nios_modules.nios_network:
+    network: "{{ toolserver_networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
+    comment: "bd_{{ function }}_{{ cust_environment }}"
+ #   template: "network{{subnetmask}}"
+    state: present
+    provider: "{{ nios_provider }}"
+
+- name: SET STAT THE NETWORK ADDRESS FOR FURTHER WORKFLOW
+  ansible.builtin.set_stats:
+    data:
+      subnet: "{{ networkaddr[0] }}"
+
+- name: END PLAY - NOTHING MORE TO DO
+  ansible.builtin.meta: end_play
