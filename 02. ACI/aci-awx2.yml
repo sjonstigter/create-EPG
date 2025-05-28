@@ -43,12 +43,12 @@
 
     - name: SET ANP NAME TO TOOLSERVER ANP
       set_fact:
-        anp_name = "anp_{{ tennant_toolserver[tenant] }}"
+        anp_name: "anp_{{ tennant_toolserver[tenant] }}"
       when: toolserver is true
 
     - name: SET ANP NAME NON TOOLSERVER ANP
       set_fact:
-        anp_name = "anp_{{ function }}"
+        anp_name: "anp_{{ function }}"
       when: toolserver is false
       
     - name: CREATE BRIDGE DOMAIN
