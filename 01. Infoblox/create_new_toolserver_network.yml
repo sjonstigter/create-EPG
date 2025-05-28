@@ -15,7 +15,7 @@
 
 - name: DEBUG toolserver_container_result network
   debug:
-    var: toolserver_container_result.network
+    var: toolserver_container_result[0].network
 
 - name: RETURN NEXT AVAILABLE IP SUBNET FROM TOOLSERVER CONTAINER
   set_fact:
