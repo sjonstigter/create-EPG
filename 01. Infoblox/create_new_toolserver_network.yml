@@ -9,7 +9,11 @@
   set_fact:
     toolserver_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': tennant_toolserver[tenant]}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
-- name: DEBUG toolserver_container_result[0]
+- name: DEBUG toolserver_container_result
+  debug:
+    var: toolserver_container_result
+
+- name: DEBUG toolserver_container_result network
   debug:
     var: toolserver_container_result.network
 
