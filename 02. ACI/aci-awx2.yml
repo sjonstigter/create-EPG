@@ -33,13 +33,24 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
-    - name: SET TOOLSERVER CONTAINER DEFINITION
+    - name: SET TOOLSERVER ANP DEFINITION
       set_fact:
         tennant_toolserver:
           shg: "shg_toolservers"
           common: "sdi_toolservers"
           ss_22: "ss_toolservers"
-          
+      when: toolserver is true
+
+    - name: SET ANP NAME TO TOOLSERVER ANP
+      set_fact:
+        anp_name = "anp_{{ tennant_toolserver[tenant] }}"
+      when: toolserver is true
+
+    - name: SET ANP NAME NON TOOLSERVER ANP
+      set_fact:
+        anp_name = "anp_{{ function }}"
+      when: toolserver is false
+      
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
         host: "{{ inventory_hostname }}"
@@ -102,7 +113,7 @@
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
-        ap: "anp_{{ function }}"
+        ap: "{{ anp_name }}"
         annotation: ""
 
     - name: CREATE EPG
@@ -113,7 +124,7 @@
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
-        ap: "anp_{{ function }}"
+        ap: "{{ anp_name }}"
         epg: "epg_{{ function }}_{{ cust_environment }}"
         bd: "bd_{{ function }}_{{ cust_environment }}"
         description: "ICD#{{ ticket_num }}"
@@ -127,7 +138,7 @@
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
-        ap: "anp_{{ function }}"
+        ap: "{{ anp_name }}"
         epg: "epg_{{ function }}_{{ cust_environment }}"
         domain: "prod_vswitch" # Set correct VMM domain name
         domain_type: "vmm"
@@ -143,7 +154,7 @@
         state: "present"
         validate_certs: False
         tenant: "{{ tenant }}"
-        ap: "anp_{{ function }}"
+        ap: "{{ anp_name }}"
         epg: "epg_{{ function }}_{{ cust_environment }}"
         contract_master_ap: "anp_contract_masters"
         contract_master_epg: "epg_cm_{{ os }}" # Set correct epg_cm name
@@ -153,5 +164,5 @@
       ansible.builtin.set_stats:
         data:
           tenant: "{{ tenant }}"
-          anp: "anp_{{ function }}"
+          anp: "{{ anp_name }}"
           epg: "epg_{{ function }}_{{ cust_environment }}"
