@@ -39,7 +39,7 @@
 
     - name: CHECK FOR TOOLSERVER REQUEST
       ansible.builtin.include_tasks: create_new_toolserver_network.yml
-      when: toolserver == 'yes'
+      when: toolserver is true
 
     - name: FIND NETWORK CONTAINER FOR OUR ANP
       set_fact:
