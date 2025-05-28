@@ -160,6 +160,36 @@
         contract_master_epg: "epg_cm_{{ os }}" # Set correct epg_cm name
         suppress_verification: "true" # for testing purpose only
 
+    - name: ADD INSTANCEMANAGER TO LB CONTRACT IF EPG IS LB
+      cisco.aci.aci_epg_to_contract:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "epg_{{ function }}_{{ cust_environment }}"
+        contract: "con_instancemanager_to_lb"
+        contract_type: "provider"
+        suppress_verification: "true" # for testing purpose only
+      when: toolserver is true
+
+    - name: ADD LB TO INSTANCEMANAGER CONTRACT IF EPG IS LB
+      cisco.aci.aci_epg_to_contract:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "epg_{{ function }}_{{ cust_environment }}"
+        contract: "con_lb_to_instancemanager"
+        contract_type: "consumer"
+        suppress_verification: "true" # for testing purpose only
+      when: toolserver is true
+
     - name: SET STAT THE TENNANT-ANP-EPG FOR FURTHER WORKFLOW
       ansible.builtin.set_stats:
         data:
