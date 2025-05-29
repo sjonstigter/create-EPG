@@ -1,13 +1,13 @@
 - name: SET TOOLSERVER CONTAINER DEFINITION
   set_fact:
-    tennant_toolserver:
+    tenant_toolserver:
       shg: "shg_toolservers"
       common: "sdi_toolservers"
       ss_22: "shg_toolservers"
 
 - name: SELECT TOOLSERVER CONTAINER FOR TENANT
   set_fact:
-    toolserver_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': tennant_toolserver[tenant]}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+    toolserver_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': tenant_toolserver[tenant]}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
 - name: RETURN NEXT AVAILABLE IP SUBNET FROM TOOLSERVER CONTAINER
   set_fact:

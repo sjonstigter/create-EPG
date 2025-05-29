@@ -1,6 +1,6 @@
 - name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
   set_fact:
-    containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tennant_container[tenant], cidr=24, provider=nios_provider) }}"
+    containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tenant_container[tenant], cidr=24, provider=nios_provider) }}"
 
 - name: SHOW NEW CONTAINER
   debug:

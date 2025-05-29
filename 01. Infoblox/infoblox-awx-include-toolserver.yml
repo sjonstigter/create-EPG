@@ -32,7 +32,7 @@
   tasks:
     - name: SET TENANT CONTAINER DEFINITION
       set_fact:
-        tennant_container:
+        tenant_container:
           shg: "10.221.0.0/16"
           common: "10.229.0.0/16"
           ss_22: "10.221.0.0/16"
