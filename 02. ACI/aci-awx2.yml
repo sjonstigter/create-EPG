@@ -59,7 +59,7 @@
         state: "present"
         validate_certs: False
         tenant: "common"
-        bd: "bd_{{ application }}_{{ cust_environment }}"
+        bd: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         vrf: "default"
         description: "ICD#{{ ticket_num }}"
         annotation: ""
@@ -74,7 +74,7 @@
         state: "present"
         validate_certs: False
         tenant: "common"
-        bd: "bd_{{ application }}_{{ cust_environment }}"
+        bd: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         gateway: "{{ subnet | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('-2') }}" # Get last IP in range for gateway address
         mask: "{{ subnetmask }}"
         scope: "public"
@@ -88,7 +88,7 @@
         state: "present"
         validate_certs: False
         tenant: "common"
-        bd: "bd_{{ application }}_{{ cust_environment }}"
+        bd: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         dhcp_label: "dhcp_relay1" # Set correct dhcp relay label
         scope: "infra"
         annotation: ""
@@ -101,7 +101,7 @@
         state: "present"
         validate_certs: False
         tenant: "common"
-        bd: "bd_{{ application }}_{{ cust_environment }}"
+        bd: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         l3out: "l3out_common-default"
         suppress_verification: "true" # for testing purpose only
 
@@ -125,8 +125,8 @@
         validate_certs: False
         tenant: "{{ tenant }}"
         ap: "{{ anp_name }}"
-        epg: "epg_{{ application }}_{{ cust_environment }}"
-        bd: "bd_{{ application }}_{{ cust_environment }}"
+        epg: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        bd: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         description: "ICD#{{ ticket_num }}"
         annotation: ""
 
@@ -139,7 +139,7 @@
         validate_certs: False
         tenant: "{{ tenant }}"
         ap: "{{ anp_name }}"
-        epg: "epg_{{ application }}_{{ cust_environment }}"
+        epg: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         domain: "prod_vswitch" # Set correct VMM domain name
         domain_type: "vmm"
         vm_provider: "vmware"
@@ -155,7 +155,7 @@
         validate_certs: False
         tenant: "{{ tenant }}"
         ap: "{{ anp_name }}"
-        epg: "epg_{{ application }}_{{ cust_environment }}"
+        epg: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         contract_master_ap: "anp_contract_masters"
         contract_master_epg: "epg_cm_{{ os }}" # Set correct epg_cm name
         suppress_verification: "true" # for testing purpose only
@@ -169,7 +169,7 @@
         validate_certs: False
         tenant: "{{ tenant }}"
         ap: "{{ anp_name }}"
-        epg: "epg_{{ application }}_{{ cust_environment }}"
+        epg: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         contract: "con_instancemanager_to_lb"
         contract_type: "provider"
         suppress_verification: "true" # for testing purpose only
@@ -184,7 +184,7 @@
         validate_certs: False
         tenant: "{{ tenant }}"
         ap: "{{ anp_name }}"
-        epg: "epg_{{ application }}_{{ cust_environment }}"
+        epg: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         contract: "con_lb_to_instancemanager"
         contract_type: "consumer"
         suppress_verification: "true" # for testing purpose only
@@ -195,4 +195,4 @@
         data:
           tenant: "{{ tenant }}"
           anp: "{{ anp_name }}"
-          epg: "epg_{{ application }}_{{ cust_environment }}"
+          epg: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"

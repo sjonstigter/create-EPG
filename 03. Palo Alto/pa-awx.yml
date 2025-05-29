@@ -32,7 +32,7 @@
     - name: CREATE NETWORK OBJECT
       paloaltonetworks.panos.panos_address_object:
         provider: '{{ provider }}'
-        name: "bd_{{ application }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
+        name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
         value: "{{ subnet }}"
 #        device_group: shared
 
