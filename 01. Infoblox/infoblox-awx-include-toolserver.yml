@@ -43,7 +43,7 @@
 
     - name: FIND NETWORK CONTAINER FOR OUR ANP
       set_fact:
-        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
     - name: HANDLE SERVICE HAS NO CONTAINER
       set_fact:
@@ -56,7 +56,7 @@
 
     - name: RERUN FIND NETWORK CONTAINER FOR OUR ANP
       set_fact:
-        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
       when: has_no_container is true
 
     - name: SHOW ANP RESULT
@@ -78,7 +78,7 @@
 
     - name: RERUN FIND NETWORK CONTAINER FOR OUR ANP
       set_fact:
-        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': function}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
       when: has_no_env_container is true
 
     - name: RERUN FILTER CONTAINERS WHERE SELECTED ENVIRONMENT = #'{{ cust_environment }}'
@@ -126,7 +126,7 @@
     - name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
-        comment: "bd_{{ function }}_{{ cust_environment }}"
+        comment: "bd_{{ application }}_{{ cust_environment }}"
         template: "network{{subnetmask}}"
         state: present
         provider: "{{ nios_provider }}"
