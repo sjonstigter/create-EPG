@@ -9,10 +9,10 @@
 - name: CREATE NEW NETWORK CONTAINER
   infoblox.nios_modules.nios_network:
     network: "{{ containeraddr[0] }}" # Dereference the returned list to a string by adding [0]
-    comment: "{{ function }}"
+    comment: "{{ application }}"
     container: true
     extattrs:
-      ANP: "{{ function }}"
+      ANP: "{{ application }}"
 #      subnet-ID: "{{ max_subnet.extattrs['subnet-ID'] | int + 1 }}" # Increase max_subnet extattr by 1
       subnet-ID: "{{ (max_subnet.extattrs['subnet-ID'] | default(0)) | int + 1 }}"
       env: "{{ cust_environment }}"
