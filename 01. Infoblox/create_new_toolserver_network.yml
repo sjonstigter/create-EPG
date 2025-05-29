@@ -20,7 +20,7 @@
 - name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
   infoblox.nios_modules.nios_network:
     network: "{{ toolserver_networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
-    comment: "bd_{{ function }}_{{ cust_environment }}"
+    comment: "bd_{{ application }}_{{ cust_environment }}"
  #   template: "network{{subnetmask}}"
     state: present
     provider: "{{ nios_provider }}"
