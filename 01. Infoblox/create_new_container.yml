@@ -18,3 +18,10 @@
       env: "{{ cust_environment }}"
     state: present
     provider: "{{ nios_provider }}"
+
+- name: CREATE REVERSE LOOKUP ZONE FOR NEW CONTAINER
+  infoblox.nios_modules.nios_zone:
+    name: "{{ containeraddr[0] }}"
+    zone_format: IPV4
+    state: present
+    provider: "{{ nios_provider }}"
