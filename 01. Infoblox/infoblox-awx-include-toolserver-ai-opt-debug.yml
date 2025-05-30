@@ -17,131 +17,110 @@
 
   tasks:
 
-    - name: Include special case for Toolserver (if applicable)
+    - name: Include special case for Toolserver
       ansible.builtin.include_tasks: create_new_toolserver_network.yml
       when: toolserver | default(false)
 
-    - name: Lookup network containers for application
+    - name: Get network containers for the application
       set_fact:
-        network_container_result: >-
-          {{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer',
-                    filter={'comment': application},
-                    return_fields=['extattrs', 'network', 'comment'],
-                    provider=nios_provider, wantlist=True) }}
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
-    - name: Debug: Show initial network container result
+    - name: Debug network container result
       debug:
         var: network_container_result
 
-    - name: Ensure a container exists (general and environment-specific)
-      block:
-        - name: Create a new general container if none found
-          ansible.builtin.include_tasks: create_new_container.yml
-          when: network_container_result | length == 0
+    - name: Create general container if not found
+      ansible.builtin.include_tasks: create_new_container.yml
+      when: network_container_result | length == 0
 
-        - name: Re-run lookup after general container creation
-          set_fact:
-            network_container_result: >-
-              {{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer',
-                        filter={'comment': application},
-                        return_fields=['extattrs', 'network', 'comment'],
-                        provider=nios_provider, wantlist=True) }}
-          when: network_container_result | length == 0
+    - name: Rerun lookup after general container creation
+      set_fact:
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+      when: network_container_result | length == 0
 
-        - name: Debug: Show network container result after general container creation
-          debug:
-            var: network_container_result
+    - name: Debug network container result after creation
+      debug:
+        var: network_container_result
 
-        - name: Filter containers by selected environment
-          set_fact:
-            env_network_containers: >-
-              {{ network_container_result | selectattr('extattrs.env', 'equalto', cust_environment) | list }}
+    - name: Filter containers by environment
+      set_fact:
+        env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
 
-        - name: Debug: Show environment filtered containers
-          debug:
-            var: env_network_containers
+    - name: Debug environment network containers
+      debug:
+        var: env_network_containers
 
-        - name: Create a new container for environment if none found
-          ansible.builtin.include_tasks: create_new_container.yml
-          when: env_network_containers | length == 0
+    - name: Create container if environment-specific one not found
+      ansible.builtin.include_tasks: create_new_container.yml
+      when: env_network_containers | length == 0
 
-        - name: Re-run lookup and environment filtering after container creation
-          set_fact:
-            env_network_containers: >-
-              {{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer',
-                        filter={'comment': application},
-                        return_fields=['extattrs', 'network', 'comment'],
-                        provider=nios_provider, wantlist=True)
-                 | selectattr('extattrs.env', 'equalto', cust_environment) | list }}
-          when: env_network_containers | length == 0
+    - name: Rerun lookup after environment container creation
+      set_fact:
+        env_network_containers: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+      when: env_network_containers | length == 0
 
-        - name: Debug: Show environment filtered containers after potential re-run
-          debug:
-            var: env_network_containers
-      when: network_container_result is not defined or network_container_result | length == 0 or
-            (env_network_containers is not defined or env_network_containers | length == 0)
+    - name: Debug environment network containers after creation
+      debug:
+        var: env_network_containers
 
     - name: Select container with highest subnet-ID
       set_fact:
         selected_container: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
 
-    - name: Debug: Show selected container network
+    - name: Debug selected container
       debug:
-        msg: "Selected container network: {{ selected_container.network }}"
+        var: selected_container
 
-    - name: Attempt to get next available subnet from selected container
+    - name: Try to get next available subnet
       block:
-        - name: Lookup next available subnet
-          set_fact:
-            networkaddr: >-
-              {{ lookup('infoblox.nios_modules.nios_next_network', selected_container.network,
-                        cidr=subnetmask, provider=nios_provider, errors='ignore') }}
-          register: subnet_lookup_result
 
-        - name: Debug: Show subnet lookup result
+        - name: Get next available subnet from selected container
+          set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', selected_container.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
+
+        - name: Debug network address lookup result
           debug:
             var: networkaddr
 
-        - name: Determine if container is full
+        - name: Mark subnet full if no subnet was found
           set_fact:
             subnet_full: true
           when: networkaddr | length == 0 or networkaddr is not defined
 
       rescue:
-        - name: Set subnet full due to error during lookup
+        - name: Set subnet full in case of error
           set_fact:
             subnet_full: true
 
-    - name: If container is full, create new container and get subnet from it
+    - name: Create new container and get subnet if original container is full
       block:
-        - name: Create new container for additional subnets
+
+        - name: Create new container
           ansible.builtin.include_tasks: create_new_container.yml
 
-        - name: Lookup next available subnet from new container
+        - name: Get next available subnet from newly created container
           set_fact:
-            networkaddr: >-
-              {{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0],
-                        cidr=subnetmask, provider=nios_provider) }}
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0], cidr=subnetmask, provider=nios_provider) }}"
 
-        - name: Debug: Show new subnet allocation from new container
+        - name: Debug new subnet address
           debug:
             var: networkaddr
+
       when: subnet_full | default(false)
 
-    - name: Debug: Final allocated subnet address
+    - name: Show allocated subnet
       debug:
         var: networkaddr
 
-    - name: Create IPv4 network with Infoblox
+    - name: Create IPv4 network
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
-        comment: >-
-          bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}
+        comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         template: "network{{ subnetmask }}"
         state: present
         provider: "{{ nios_provider }}"
 
-    - name: Set subnet in Ansible stats for further workflow usage
+    - name: Store subnet in Ansible stats
       ansible.builtin.set_stats:
         data:
           subnet: "{{ networkaddr[0] }}"
