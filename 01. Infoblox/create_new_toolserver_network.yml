@@ -3,7 +3,7 @@
     tenant_toolserver:
       shg: "shg_toolservers"
       common: "sdi_toolservers"
-      ss_22: "shg_toolservers"
+      ss_22: "ss_toolservers"
 
 - name: SELECT TOOLSERVER CONTAINER FOR TENANT
   set_fact:
@@ -20,7 +20,7 @@
 - name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
   infoblox.nios_modules.nios_network:
     network: "{{ toolserver_networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
-    comment: "bd_{{ application }}_{{ cust_environment }}"
+    comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
  #   template: "network{{subnetmask}}"
     state: present
     provider: "{{ nios_provider }}"
