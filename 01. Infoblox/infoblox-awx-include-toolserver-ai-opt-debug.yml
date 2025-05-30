@@ -1,4 +1,22 @@
 ---
+###########################################################################################################
+# Create Infoblox network
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Vind alle /24 netwerk containers voor onze gekozen dienst.
+# - Indien meerdere netwerk containers: Selecteer hoogste /24 netwerk container voor onze dienst dmv 
+#   subnet-ID extensible attribute.
+# - Als /24 netwerk container vol is registreer nieuw /24 netwerk vanuit /16 parent netwerk container 
+#   en stel subnet-ID extensible attribute in.
+# - Maak nieuw netwerk aan met gekozen subnet cidr (bv /26, /27, /28 of /29) in gekozen dient netwerk 
+#   container.
+#
+# Requirements:
+# - Python infoblox-client module (pip install infoblox-client)
+# - infoblox.nios_modules ansible module (ansible-galaxy collection install infoblox.nios_modules)
+#
+###########################################################################################################
 - hosts: nios
   connection: local
   name: ALLOCATE INFOBLOX SUBNET
@@ -16,7 +34,6 @@
       ss_22: "10.221.0.0/16"
 
   tasks:
-
     - name: Include special case for Toolserver
       ansible.builtin.include_tasks: create_new_toolserver_network.yml
       when: toolserver | default(false)
@@ -29,11 +46,11 @@
       debug:
         var: network_container_result
 
-    - name: Create general container if not found
+    - name: Create application container if not found
       ansible.builtin.include_tasks: create_new_container.yml
       when: network_container_result | length == 0
 
-    - name: Rerun lookup after general container creation
+    - name: Rerun lookup after application container creation
       set_fact:
         network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
       when: network_container_result | length == 0
@@ -124,3 +141,12 @@
       ansible.builtin.set_stats:
         data:
           subnet: "{{ networkaddr[0] }}"
+
+#    - name: RESTART INFOBLOX DHCP SERVICE
+#      nios_restartservices:
+#        services:
+#          - DHCP
+#        groups: 
+#        members:
+#        mode: GROUPED # or SEQUENTIAL
+#        provider: "{{ nios_provider }}"
