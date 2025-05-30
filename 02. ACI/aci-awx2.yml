@@ -157,7 +157,7 @@
         ap: "{{ anp_name }}"
         epg: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         contract_master_ap: "anp_contract_masters"
-        contract_master_epg: "epg_cm_{{ os }}" # Set correct epg_cm name
+        contract_master_epg: "epg_cm_{{ tenant }}_{{ os }}" # Set correct epg_cm name
         suppress_verification: "true" # for testing purpose only
 
     - name: ADD INSTANCEMANAGER TO LB CONTRACT IF EPG IS LB
