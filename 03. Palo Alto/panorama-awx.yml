@@ -36,8 +36,8 @@
         value: "{{ subnet }}"
         device_group: shared
 
- #   - name: COMMIT CHANGES BY API-USER ON PANORAMA
- #     paloaltonetworks.panos.panos_commit_panorama:
- #       provider: '{{ provider }}'
- #       admins: ['api-user']
- #       description: "ICD#{{ ticket_num }}"
+    - name: COMMIT CHANGES BY API-USER ON PANORAMA
+      paloaltonetworks.panos.panos_commit_panorama:
+        provider: '{{ provider }}'
+        admins: ['admin']
+        description: "ICD#{{ ticket_num }}"
