@@ -1,0 +1,44 @@
+---
+###########################################################################################################
+# Create Palo Alto firewall object
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Create Palo Alto network object
+#
+# Requirements:
+# - ansible>=2.15.0
+# - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
+# - Python module pan-python (pip install pan-python)
+#
+###########################################################################################################
+
+- name: CREATE PALO ALTO OBJECT
+  hosts: "panorama"
+  connection: local
+  gather_facts: False
+
+  vars:
+    provider:
+      ip_address: "{{ inventory_hostname }}"
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+
+  tasks:
+    - name: DEBUG SHOW SUBNET
+      debug:
+        var: subnet
+
+    - name: CREATE NETWORK OBJECT
+      paloaltonetworks.panos.panos_address_object:
+        provider: '{{ provider }}'
+        name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
+        value: "{{ subnet }}"
+#        device_group: shared
+
+# TODO CONVERT FROM FIREWALL TO PANORAMA AND COMMIT
+ #   - name: COMMIT CHANGES BY API-USER ON PANORAMA
+ #     paloaltonetworks.panos.panos_commit_panorama:
+ #       provider: '{{ provider }}'
+ #       admins: ['api-user']
+ #       description: "ICD#{{ ticket_num }}"
