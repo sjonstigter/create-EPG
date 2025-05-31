@@ -34,9 +34,8 @@
         provider: '{{ provider }}'
         name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
         value: "{{ subnet }}"
-#        device_group: shared
+        device_group: shared
 
-# TODO CONVERT FROM FIREWALL TO PANORAMA AND COMMIT
  #   - name: COMMIT CHANGES BY API-USER ON PANORAMA
  #     paloaltonetworks.panos.panos_commit_panorama:
  #       provider: '{{ provider }}'
