@@ -40,7 +40,8 @@
               "destination_ip": item.destination_ip,
               "application": item.application,
               "service": item.service,
-              "action": item.action
+              "action": item.action,
+              "devicegroup": item.devicegroup
             }]
           }}
       loop: "{{ rules }}"
