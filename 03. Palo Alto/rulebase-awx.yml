@@ -1,0 +1,50 @@
+---
+- name: Map IPs to zones in rules
+  hosts: localhost
+  gather_facts: no
+  vars:
+    network_zones:
+      - { range: "10.221.0.0/16", zone: "aci-internal" }
+      - { range: "10.229.0.0/16", zone: "aci-internal" }
+      - { range: "10.220.0.0/16", zone: "management" }
+    default_zone: "external"
+    rules_file: "rules.json"
+
+  tasks:
+    - name: Read rules from JSON file
+      slurp:
+        src: "{{ rules_file }}"
+      register: rules_raw
+
+    - name: Parse JSON content
+      set_fact:
+        rules: "{{ rules_raw.content | b64decode | from_json }}"
+
+    - name: Map IP to zone
+      vars:
+        ip_to_zone: >-
+          {{
+            (network_zones | selectattr('range', 'defined') | selectattr('range', 'search', ip | regex_escape) | list | first).zone
+            if ip is ipaddr('subnet') and
+               (network_zones | selectattr('range', 'defined') | selectattr('range', 'search', ip | regex_escape) | list)
+            else default_zone
+          }}
+      set_fact:
+        updated_rules: >-
+          {{
+            updated_rules | default([]) + [{
+              "rule_name": item.rule_name,
+              "source_zone": (item.source_zone | default("") | length > 0) | ternary(item.source_zone, (item.source_ip[0] | ipaddr('subnet') | ipaddr('network') | ip_to_zone)),
+              "destination_zone": (item.destination_zone | default("") | length > 0) | ternary(item.destination_zone, (item.destination_ip[0] | ipaddr('subnet') | ipaddr('network') | ip_to_zone)),
+              "source_ip": item.source_ip,
+              "destination_ip": item.destination_ip,
+              "application": item.application,
+              "service": item.service,
+              "action": item.action
+            }]
+          }}
+      loop: "{{ rules }}"
+
+    - name: Display updated rules with zones
+      debug:
+        var: updated_rules
