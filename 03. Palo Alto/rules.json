@@ -1,0 +1,22 @@
+[
+  {
+    "rule_name": "Allow-HTTP",
+    "source_zone": ,
+    "destination_zone": ,
+    "source_ip": ["10.221.122.0/28"],
+    "destination_ip": ["0.0.0.0/0"],
+    "application": ["web-browsing"],
+    "service": ["application-default"],
+    "action": "allow"
+  },
+  {
+    "rule_name": "Deny-FTP",
+    "source_zone": ,
+    "destination_zone": ,
+    "source_ip": ["10.221.122.0/28"],
+    "destination_ip": ["10.220.1.16/28"],
+    "application": ["ftp"],
+    "service": ["application-default"],
+    "action": "deny"
+  }
+]
