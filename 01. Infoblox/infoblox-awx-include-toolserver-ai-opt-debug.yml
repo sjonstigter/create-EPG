@@ -146,7 +146,6 @@
 #      nios_restartservices:
 #        services:
 #          - DHCP
-#        groups: 
-#        members:
-#        mode: GROUPED # or SEQUENTIAL
+#        restart_option: RESTART_IF_NEEDED
+#        mode: GROUPED
 #        provider: "{{ nios_provider }}"
