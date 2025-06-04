@@ -29,7 +29,8 @@
       paloaltonetworks.panos.panos_op:
         provider: '{{ provider }}'
 #        cmd: '<show><rule-hit-count><vsys><vsys-name>vsys1</vsys-name><rule-base><security><rules><all/></rules></security></rule-base></vsys></rule-hit-count>'
-        cmd: 'show rule-hit-count vsys vsys-name vsys1 rule-base security rules all'
+#        cmd: 'show rule-hit-count vsys vsys-name vsys1 rule-base security rules all'
+        cmd: 'show rule-hit-count vsys1 rule-base security rules all'
 #        cmd_is_xml: true
       register: sec_hitcount
 
