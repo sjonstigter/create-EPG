@@ -28,7 +28,8 @@
     - name: CREATE NETWORK OBJECT
       paloaltonetworks.panos.panos_op:
         provider: '{{ provider }}'
-        cmd: 'show rule-hit-count vsys vsys-name vsys1 rule-base security rules all'
+        cmd: 'show session info'
+#        cmd: 'show rule-hit-count vsys vsys-name vsys1 rule-base security rules all'
       register: sec_hitcount
 
     - name: DEBUG 
