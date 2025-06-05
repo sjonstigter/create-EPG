@@ -11,7 +11,7 @@
   tasks:
     - name: Launch a job on AWX
       awx.awx.export:
-        controller_host: 'awx.zero-days.nl'
+        controller_host: '192.168.7.231:10445'
         controller_username: 'sstigter'
         controller_password: 'B4rch3tt430!'
         workflow_job_templates: 'all'
