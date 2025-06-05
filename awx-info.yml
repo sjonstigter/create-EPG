@@ -13,7 +13,7 @@
       awx.awx.export:
         controller_host: 'awx-lb.zero-days.nl'
         controller_username: 'sstigter'
-        controller_password: 'B4rch3tt430!'
+        controller_password: '1234'
         validate_certs: false
         workflow_job_templates: 'all'
       register: awx_job_result
