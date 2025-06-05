@@ -11,9 +11,10 @@
   tasks:
     - name: Launch a job on AWX
       awx.awx.export:
-        controller_host: 'localhost'
+        controller_host: 'localhost:80'
         controller_username: 'sstigter'
         controller_password: 'B4rch3tt430!'
+        validate_certs: false
         workflow_job_templates: 'all'
       register: awx_job_result
 
