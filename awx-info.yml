@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Launch a job on AWX
+      awx.awx.export:
+        workflow_job_templates: 'all'
+      register: awx_job_result
+
+    - name: Print the results
+      debug:
+        msg: "{{ awx_job_result }}"
