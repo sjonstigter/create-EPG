@@ -1,9 +1,17 @@
 ---
 - hosts: localhost
   gather_facts: false
+  
+  vars:
+    provider:
+      ip_address: "{{ inventory_hostname }}"
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+      
   tasks:
     - name: Launch a job on AWX
       awx.awx.export:
+        provider: '{{ provider }}'
         workflow_job_templates: 'all'
       register: awx_job_result
 
