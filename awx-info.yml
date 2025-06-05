@@ -11,7 +11,9 @@
   tasks:
     - name: Launch a job on AWX
       awx.awx.export:
-        provider: '{{ provider }}'
+        controller_host: 'awx.zero-days.nl'
+        controller_username: 'sstigter'
+        controller_password: 'B4rch3tt430!'
         workflow_job_templates: 'all'
       register: awx_job_result
 
