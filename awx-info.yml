@@ -12,8 +12,8 @@
     - name: Launch a job on AWX
       awx.awx.export:
         controller_host: 'awx-lb.zero-days.nl'
-        controller_username: username
-        controller_password: password
+        controller_username: "{{ username }}"
+        controller_password: "{{ password }}"
         validate_certs: false
 #        workflow_job_templates: 'all'
         job_templates: 'all'
