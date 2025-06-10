@@ -1,8 +1,8 @@
 [nios]
-infoblox.infra.schipholgroupcloud.nl
+infoblox.zero-days.nl
 
 [apic]
-apic1.infra.schipholgroupcloud.nl
+sandboxapicdc.cisco.com
 
 [panorama]
-sgfwmgt01.infra.schipholgroupcloud.nl
+panorama.zero-days.nl
