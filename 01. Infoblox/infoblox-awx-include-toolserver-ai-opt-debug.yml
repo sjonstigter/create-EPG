@@ -83,18 +83,18 @@
 
     - name: SELECT NETWORK CONTAINER WITH HIGHEST SUBNET-ID
       set_fact:
-        selected_container: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
+        max_subnet: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
 
     - name: DEBUG SELECTED CONTAINER
       debug:
-        var: selected_container
+        var: max_subnet
 
     - name: REQUEST NEW SUBNET FROM NETWORK CONTAINER
       block:
 
         - name: GET NEXT AVAILABLE SUBNET FROM SELECTED NETWORK CONTAINER
           set_fact:
-            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', selected_container.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', max_subnet.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
 
         - name: DEBUG SUBNET LOOKUP RESULT
           debug:
