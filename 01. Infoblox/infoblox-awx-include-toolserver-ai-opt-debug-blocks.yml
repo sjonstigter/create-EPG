@@ -1,0 +1,157 @@
+---
+###########################################################################################################
+# Create Infoblox network
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Vind alle /24 netwerk containers voor onze gekozen dienst.
+# - Indien meerdere netwerk containers: Selecteer hoogste /24 netwerk container voor onze dienst dmv 
+#   subnet-ID extensible attribute.
+# - Als /24 netwerk container vol is registreer nieuw /24 netwerk vanuit /16 parent netwerk container 
+#   en stel subnet-ID extensible attribute in.
+# - Maak nieuw netwerk aan met gekozen subnet cidr (bv /26, /27, /28 of /29) in gekozen dient netwerk 
+#   container.
+#
+# Requirements:
+# - Python infoblox-client module (pip install infoblox-client)
+# - infoblox.nios_modules ansible module (ansible-galaxy collection install infoblox.nios_modules)
+#
+###########################################################################################################
+- hosts: nios
+  connection: local
+  name: ALLOCATE INFOBLOX SUBNET
+
+  vars:
+    nios_provider:
+      host: "{{ inventory_hostname }}"
+      username: "{{ lookup('env', 'ANSIBLE_NET_USERNAME') }}"
+      password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
+      ssl_verify: false
+
+    tenant_container:
+      shg: "10.221.0.0/16"
+      common: "10.229.0.0/16"
+      ss_22: "10.221.0.0/16"
+
+  tasks:
+    - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
+      ansible.builtin.include_tasks: create_new_toolserver_network.yml
+      when: toolserver | default(false)
+
+    - name: GET NETWORK CONTAINERS FOR REQUESTED APPLICATION
+      set_fact:
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+    - name: DEBUG APPLICATION NETWORK CONTAINER RESULT
+      debug:
+        var: network_container_result
+
+    - name: CREATE APPLICATION CONTAINER IF NOT EXISTS
+      block:
+
+        - name: CREATE NEW APPLICATION NETWORK CONTAINER
+          ansible.builtin.include_tasks: create_new_container.yml
+
+        - name: RERUN LOOKUP AFTER NEW APPLICATION NETWORK CONTAINER CREATED
+          set_fact:
+            network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+        - name: DEBUG APPLICATION NETWORK CONTAINER RESULT AFTER CREATION
+          debug:
+            var: network_container_result
+
+      when: network_container_result | length == 0
+
+    - name: FILTER CONTAINERS BY ENVIRONMENT
+      set_fact:
+        env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'search', cust_environment) | list }}"
+
+    - name: DEBUG ENVIRONMENT NETWORK CONTAINERS
+      debug:
+        var: env_network_containers
+
+    - name: CREATE NETWORK CONTAINER IF NO ENVIRONMENT-SPECIFIC EXISTS
+      block:
+
+        - name: CREATE NEW ENVIRONMENT SPECIFIC NETWORK CONTAINER
+          ansible.builtin.include_tasks: create_new_container.yml
+
+        - name: RERUN LOOKUP AFTER NEW ENVIRONMENT NETWORK CONTAINER CREATED
+          set_fact:
+            env_network_containers: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+
+        - name: DEBUG ENVIRONMENT NETWORK CONTAINERS AFTER CREATION
+          debug:
+            var: env_network_containers
+
+      when: env_network_containers | length == 0
+
+    - name: SELECT NETWORK CONTAINER WITH HIGHEST SUBNET-ID
+      set_fact:
+        max_subnet: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
+
+    - name: DEBUG SELECTED CONTAINER
+      debug:
+        var: max_subnet
+
+    - name: REQUEST NEW SUBNET FROM NETWORK CONTAINER
+      block:
+
+        - name: GET NEXT AVAILABLE SUBNET FROM SELECTED NETWORK CONTAINER
+          set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', max_subnet.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
+
+        - name: DEBUG SUBNET LOOKUP RESULT
+          debug:
+            var: networkaddr
+
+        - name: HANDLE NETWORK CONTAINER FULL CONDITION
+          set_fact:
+            subnet_full: true
+          when: networkaddr | length == 0 or networkaddr is not defined
+
+      rescue:
+        - name: SET SUBNET FULL IN CASE OF ERROR
+          set_fact:
+            subnet_full: true
+
+    - name: CREATE NEW CONTAINER AND GET SUBNET IF CONTAINER IS FULL
+      block:
+
+        - name: CREATE NEW NETWORK CONTAINER
+          ansible.builtin.include_tasks: create_new_container.yml
+
+        - name: GET NEXT AVAILABLE SUBNET FROM NEWLY CREATED CONTAINER
+          set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0], cidr=subnetmask, provider=nios_provider) }}"
+
+        - name: DEBUG NEW SUBNET ADDRESS
+          debug:
+            var: networkaddr
+
+      when: subnet_full | default(false)
+
+    - name: SHOW ALLOCATED SUBNET
+      debug:
+        var: networkaddr
+
+    - name: CREATE NEW IPV4 NETWORK
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
+        state: present
+        provider: "{{ nios_provider }}"
+
+    - name: STORE SUBNET IN ANSIBLE STATS
+      ansible.builtin.set_stats:
+        data:
+          subnet: "{{ networkaddr[0] }}"
+
+#    - name: RESTART INFOBLOX DHCP SERVICE
+#      nios_restartservices:
+#        services:
+#          - DHCP
+#        restart_option: RESTART_IF_NEEDED
+#        mode: GROUPED
+#        provider: "{{ nios_provider }}"
