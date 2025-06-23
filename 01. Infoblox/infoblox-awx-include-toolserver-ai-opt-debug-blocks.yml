@@ -46,7 +46,7 @@
       debug:
         var: network_container_result
 
-    - name: CREATE APPLICATION CONTAINER IF NOT EXISTS
+    - name: CREATE APPLICATION CONTAINER IF NONE EXISTS
       block:
 
         - name: CREATE NEW APPLICATION NETWORK CONTAINER
