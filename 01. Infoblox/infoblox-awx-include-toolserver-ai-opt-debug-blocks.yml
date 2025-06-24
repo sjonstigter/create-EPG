@@ -3,7 +3,7 @@
 # Create Infoblox network
 ###########################################################################################################
 #
-# This script performs the following steps:
+# This script performs the following steps (NEEDS UPDATING):
 # - Vind alle /24 netwerk containers voor onze gekozen dienst.
 # - Indien meerdere netwerk containers: Selecteer hoogste /24 netwerk container voor onze dienst dmv 
 #   subnet-ID extensible attribute.
