@@ -38,6 +38,10 @@
       ansible.builtin.include_tasks: create_new_toolserver_network.yml
       when: toolserver | default(false)
 
+    - name: INCLUDE SPECIAL CASE FOR FIXED NETWORK CONTAINER
+      ansible.builtin.include_tasks: create_new_static_network.yml
+      when: staticnetwork | default(false)
+
     - name: GET NETWORK CONTAINERS FOR REQUESTED APPLICATION
       set_fact:
         network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
