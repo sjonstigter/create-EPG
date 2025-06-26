@@ -1,0 +1,27 @@
+- name: SHOW MANUALLY SPECIFIED NETWORK CONTAINER
+  debug:
+    var: networkcontainer
+
+- name: GET NEXT AVAILABLE SUBNET FROM MANUALLY SPECIFIED NETWORK CONTAINER
+  set_fact:
+    networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', networkcontainer, cidr=subnetmask, provider=nios_provider) }}"
+
+- name: DEBUG SUBNET LOOKUP RESULT
+  debug:
+     var: networkaddr
+
+- name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
+  infoblox.nios_modules.nios_network:
+    network: "{{ networkaddr }}"
+    comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+    template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
+    state: present
+    provider: "{{ nios_provider }}"
+
+- name: SET STAT THE NETWORK ADDRESS FOR FURTHER WORKFLOW
+  ansible.builtin.set_stats:
+    data:
+      subnet: "{{ networkcontainer }}"
+
+- name: END PLAY - NOTHING MORE TO DO
+  ansible.builtin.meta: end_play
