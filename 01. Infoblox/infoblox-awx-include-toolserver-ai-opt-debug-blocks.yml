@@ -40,7 +40,7 @@
 
     - name: INCLUDE SPECIAL CASE FOR STATIC NETWORK
       ansible.builtin.include_tasks: create_new_static_network.yml
-      when: staticnetwork | default(false)
+      when: staticnetwork is defined and staticnetwork | length > 0
 
     - name: GET NETWORK CONTAINERS FOR REQUESTED APPLICATION
       set_fact:
