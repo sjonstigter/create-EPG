@@ -4,7 +4,6 @@
 ###########################################################################################################
 #
 # This script performs the following steps:
-# - Query Infoblox WAPI for network subnet for Bridge Domain name in comment field
 # - Create Bridge Domain in common:default
 # - Create Subnet/gateway using ansible.utils.ipaddr
 # - Add DHCP relay label to BD
