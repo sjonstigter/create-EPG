@@ -33,7 +33,7 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
-    - name: CHECK IF MANDATORY VARS ARE PRESENT
+    - name: FAIL IF MANDATORY VARS ARE MISSING
       fail:
         msg: "One or more required variables are undefined!"
       when: >
