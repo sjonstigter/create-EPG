@@ -34,6 +34,19 @@
       ss_22: "10.221.0.0/16"
 
   tasks:
+    - name: FAIL IF MANDATORY VARS ARE MISSING
+      fail:
+        msg: "One or more required variables are undefined!"
+      when: >
+        tenant is not defined or
+        application is not defined or
+        cust_environment is not defined or
+        os is not defined or
+        subnetmask is not defined or
+        toolserver is not defined or
+        loadbalancer is not defined or
+        dhcp is not defined
+
     - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
       ansible.builtin.include_tasks: create_new_toolserver_network.yml
       when: toolserver | default(false)
