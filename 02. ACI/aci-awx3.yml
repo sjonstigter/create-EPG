@@ -47,9 +47,9 @@
         toolserver is not defined or
         loadbalancer is not defined 
 
-    - name: SET TOOLSERVER ANP DEFINITION
+    - name: SET TOOLSERVER ANP MAPPING
       set_fact:
-        tennant_toolserver:
+        tenant_toolserver:
           shg: "shg_toolservers"
           common: "sdi_toolservers"
           ss_22: "ss_toolservers"
@@ -59,7 +59,7 @@
       set_fact:
         bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         epg_name: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-        anp_name: "{{ 'anp_' + (tennant_toolserver[tenant] if toolserver else application) }}"
+        anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver else application) }}"
       
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
