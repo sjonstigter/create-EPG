@@ -47,12 +47,16 @@
         toolserver is not defined or
         loadbalancer is not defined 
 
-    - name: SET COMMON NAMES AND FLAGS
+    - name: SET TOOLSERVER ANP DEFINITION
       set_fact:
         tennant_toolserver:
           shg: "shg_toolservers"
           common: "sdi_toolservers"
           ss_22: "ss_toolservers"
+      when: toolserver is true
+
+    - name: SET COMMON NAMES 
+      set_fact:
         bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         epg_name: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         anp_name: "{{ 'anp_' + (tennant_toolserver[tenant] if toolserver else application) }}"
