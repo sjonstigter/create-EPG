@@ -143,7 +143,7 @@
         tenant: "{{ tenant }}"
         ap: "{{ anp_name }}"
         epg: "{{ epg_name }}"
-        domain: "prod_vswitch" # Set correct VMM domain name
+        domain: "{{ vmm_domain }}"
         domain_type: "vmm"
         vm_provider: "vmware"
         encap_mode: "auto"
