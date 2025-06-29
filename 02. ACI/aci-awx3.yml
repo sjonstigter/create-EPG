@@ -147,7 +147,7 @@
         domain_type: "vmm"
         vm_provider: "vmware"
         encap_mode: "auto"
-        # enhanced_lag_policy: "lacp_vmm_shg" # TODO: enable lacp lag mode here
+        enhanced_lag_policy: "lacp_vmm_123" # TODO: enable lacp lag mode here
 
     - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
       cisco.aci.aci_epg_to_contract_master:
