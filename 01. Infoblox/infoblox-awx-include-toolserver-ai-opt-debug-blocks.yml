@@ -42,6 +42,7 @@
         application is not defined or
         cust_environment is not defined or
         os is not defined or
+        vmm_domain is not defined or
         subnetmask is not defined or
         toolserver is not defined or
         loadbalancer is not defined or
