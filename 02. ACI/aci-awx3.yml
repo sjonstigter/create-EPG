@@ -12,7 +12,7 @@
 # - Create ANP
 # - Create EPG
 # - Bind VMM to EPG
-# - Apply Contract Masters to EPG (linux/windows) - TODO: Add LB
+# - Apply Contract Masters to EPG (linux/windows)
 #
 # Requirements:
 # - ansible>=2.4.2.0
