@@ -59,6 +59,7 @@
         bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         epg_name: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver else application) }}"
+        lag_policy: "lacp_{{ vmm_domain }}"
       
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
@@ -153,7 +154,7 @@
         domain_type: "vmm"
         vm_provider: "vmware"
         encap_mode: "auto"
-        enhanced_lag_policy: "lacp_vmm_123" # TODO: enable lacp lag mode here
+        enhanced_lag_policy: "{{ lag_policy }}"
 
     - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
       cisco.aci.aci_epg_to_contract_master:
