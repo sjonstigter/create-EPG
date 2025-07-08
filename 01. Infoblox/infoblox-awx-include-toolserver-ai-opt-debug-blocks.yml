@@ -3,7 +3,7 @@
 # Create Infoblox network
 ###########################################################################################################
 #
-# This script performs the following steps:
+# This playbook performs the following steps:
 # - Lookup the Infoblox network container for the requested application.
 # - If the requested application has no network container a new Infoblox network container will be created 
 #   (/24 network container).
@@ -14,7 +14,7 @@
 # - If the network container does not have enough space left to register the new network with the requested 
 #   subnetmask size (ie if the network container is full) a new Infoblox network container for the 
 #   application is created.
-# - And finally it registers a new network for the application in the selected network container with the 
+# - Finally it registers a new network for the application in the selected network container with the 
 #   requested subnetmask size.
 #
 # Requirements:
