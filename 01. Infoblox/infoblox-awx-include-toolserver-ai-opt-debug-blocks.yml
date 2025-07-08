@@ -3,14 +3,19 @@
 # Create Infoblox network
 ###########################################################################################################
 #
-# This script performs the following steps (NEEDS UPDATING):
-# - Vind alle /24 netwerk containers voor onze gekozen dienst.
-# - Indien meerdere netwerk containers: Selecteer hoogste /24 netwerk container voor onze dienst dmv 
-#   subnet-ID extensible attribute.
-# - Als /24 netwerk container vol is registreer nieuw /24 netwerk vanuit /16 parent netwerk container 
-#   en stel subnet-ID extensible attribute in.
-# - Maak nieuw netwerk aan met gekozen subnet cidr (bv /26, /27, /28 of /29) in gekozen dient netwerk 
-#   container.
+# This script performs the following steps:
+# - Lookup the Infoblox network container for the requested application.
+# - If the requested application has no network container a new Infoblox network container will be created 
+#   (/24 network container).
+# - Filter the application network containers per requested environment (dev, tst, acc, prd).
+# - If the application has no network container for the requested environment (dev, tst, acc, prd) a new 
+#   Infoblox network container for the application + environment will be created.
+# - Request a new network from the application network container with the specified subnetmask size.
+# - If the network container does not have enough space left to register the new network with the requested 
+#   subnetmask size (ie if the network container is full) a new Infoblox network container for the 
+#   application is created.
+# - And finally it registers a new network for the application in the selected network container with the 
+#   requested subnetmask size.
 #
 # Requirements:
 # - Python infoblox-client module (pip install infoblox-client)
