@@ -15,5 +15,13 @@
     data:
       subnet: "{{ staticnetwork }}"
 
+#    - name: RESTART INFOBLOX DHCP SERVICE
+#      nios_restartservices:
+#        services:
+#          - DHCP
+#        restart_option: RESTART_IF_NEEDED
+#        mode: GROUPED
+#        provider: "{{ nios_provider }}"
+
 - name: END PLAY - NOTHING MORE TO DO
   ansible.builtin.meta: end_play
