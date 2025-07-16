@@ -22,8 +22,8 @@
       ansible.builtin.uri:
         url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/12/launch/"
         method: POST
-        user: username
-        password: password
+        user: "{{ username }}"
+        password: "{{ password }}"
         status_code: 201, 302, 200
         headers:
             Content-Type: "application/json"
@@ -44,8 +44,8 @@
       ansible.builtin.uri:
         url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/13/launch/"
         method: POST
-        user: username
-        password: password
+        user: "{{ username }}"
+        password: "{{ password }}"
         status_code: 201, 302, 200
         headers:
             Content-Type: "application/json"
