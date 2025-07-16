@@ -20,7 +20,7 @@
   tasks:
     - name: CALL WINDOWS WORKFLOW
       ansible.builtin.uri:
-        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/12/launch/"
+        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/15/launch/"
         method: POST
         user: "{{ username }}"
         password: "{{ password }}"
@@ -42,7 +42,7 @@
 
     - name: CALL LINUX WORKFLOW
       ansible.builtin.uri:
-        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/13/launch/"
+        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/21/launch/"
         method: POST
         user: "{{ username }}"
         password: "{{ password }}"
