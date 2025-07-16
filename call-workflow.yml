@@ -21,8 +21,8 @@
           {
               "extra_vars": {
                 "tenant": "{{ tenant }}",
-                "anp": "{{ anp_name }}",
-                "epg": "{{ epg_name }}",
+                "anp": "{{ anp }}",
+                "epg": "{{ epg }}",
                 "subnet": "{{ subnet }}"
               }
           }
@@ -43,8 +43,8 @@
           {
               "extra_vars": {
                 "tenant": "{{ tenant }}",
-                "anp": "{{ anp_name }}",
-                "epg": "{{ epg_name }}",
+                "anp": "{{ anp }}",
+                "epg": "{{ epg }}",
                 "subnet": "{{ subnet }}"
               }
           }
