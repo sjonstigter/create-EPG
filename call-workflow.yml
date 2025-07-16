@@ -14,6 +14,7 @@
         method: POST
         user: "{{ username }}"
         password: "{{ password }}"
+        force_basic_auth: yes
         status_code: 201, 302, 200
         headers:
             Content-Type: "application/json"
@@ -36,6 +37,7 @@
         method: POST
         user: "{{ username }}"
         password: "{{ password }}"
+        force_basic_auth: yes        
         status_code: 201, 302, 200
         headers:
             Content-Type: "application/json"
