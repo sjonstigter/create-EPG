@@ -13,6 +13,10 @@
   connection: local
   gather_facts: False
 
+  vars:
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+  
   tasks:
     - name: CALL WINDOWS WORKFLOW
       ansible.builtin.uri:
