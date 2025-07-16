@@ -1,0 +1,59 @@
+---
+###########################################################################################################
+# Call Windows or Linux workflow through API call
+###########################################################################################################
+#
+# This script performs the following steps:
+#
+# Requirements:
+#
+###########################################################################################################
+
+- name: CALL WORKFLOW
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: CALL WINDOWS WORKFLOW
+      ansible.builtin.uri:
+        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/12/launch/"
+        method: POST
+        user: username
+        password: password
+        status_code: 201, 302, 200
+        headers:
+            Content-Type: "application/json"
+        body:
+          {
+              "extra_vars": {
+                "tenant": "{{ tenant }}",
+                "anp": "{{ anp_name }}",
+                "epg": "{{ epg_name }}",
+                "subnet": "{{ subnet }}"
+              }
+          }
+        body_format: json
+        validate_certs: no
+      when: os == "windows"
+
+    - name: CALL LINUX WORKFLOW
+      ansible.builtin.uri:
+        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/13/launch/"
+        method: POST
+        user: username
+        password: password
+        status_code: 201, 302, 200
+        headers:
+            Content-Type: "application/json"
+        body:
+          {
+              "extra_vars": {
+                "tenant": "{{ tenant }}",
+                "anp": "{{ anp_name }}",
+                "epg": "{{ epg_name }}",
+                "subnet": "{{ subnet }}"
+              }
+          }
+        body_format: json
+        validate_certs: no
+      when: os == "linux"
