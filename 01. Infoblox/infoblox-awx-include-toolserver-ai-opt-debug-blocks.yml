@@ -160,7 +160,7 @@
 
     - name: GET VLAN FOR OUR NETWORK
       set_fact:
-        vlanid: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=tenant, provider=nios_provider) }}"
+        vlanid: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent='range1', provider=nios_provider) }}"
 
     - name: SHOW ALLOCATED VLAN
       debug:
