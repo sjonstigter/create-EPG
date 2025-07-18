@@ -162,6 +162,10 @@
       set_fact:
         vlanid: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=tenant, provider=nios_provider) }}"
 
+    - name: SHOW ALLOCATED VLAN
+      debug:
+        var: vlanid
+
     - name: CREATE NEW IPV4 NETWORK
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
