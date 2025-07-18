@@ -160,7 +160,7 @@
 
     - name: GET VLAN FOR OUR NETWORK
       set_fact:
-        vlanid: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=tenant, provider=nios_provider) }}"
+        vlanid: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent='shg', provider=nios_provider) }}"
 
     - name: SHOW ALLOCATED VLAN
       debug:
@@ -172,7 +172,7 @@
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         vlans:
          - name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-           parent: tenant
+           parent: 'shg'
            id: vlanid
         template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
         state: present
