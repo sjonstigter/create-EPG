@@ -2,8 +2,8 @@
   ansible.builtin.uri:
     url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/vlanrange?name={{ vlanrange_name }}"
     method: GET
-    user: "{{ nios_provider.username }}"
-    password: "{{ nios_provider.password }}"
+    user: "admin"
+    password: "infoblox"
     force_basic_auth: yes
     return_content: yes
     validate_certs: "{{ nios_provider.ssl_verify }}"
@@ -22,8 +22,8 @@
   ansible.builtin.uri:
     url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/{{ vlanrange_ref }}?_function=next_available_vlan_id"
     method: POST
-    user: "{{ nios_provider.username }}"
-    password: "{{ nios_provider.password }}"
+    user: "admin"
+    password: "infoblox"
     force_basic_auth: yes
     body_format: json
     body: |
