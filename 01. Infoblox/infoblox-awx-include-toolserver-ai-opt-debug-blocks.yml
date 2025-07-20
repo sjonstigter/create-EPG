@@ -32,6 +32,8 @@
       username: "{{ lookup('env', 'ANSIBLE_NET_USERNAME') }}"
       password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
       ssl_verify: false
+    wapi_version: "v2.13"
+    vlanrange_name: "vlan_pool"
 
     tenant_container:
       shg: "10.221.0.0/16"
