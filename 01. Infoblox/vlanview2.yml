@@ -9,10 +9,10 @@
     validate_certs: no
   register: vlanrange_lookup
 
-- name: Fail if VLAN view not found
-  ansible.builtin.fail:
-    msg: "VLAN view '{{ vlanrange_name }}' not found in Infoblox"
-  when: vlanrange_lookup.json | length == 0
+#- name: Fail if VLAN view not found
+#  ansible.builtin.fail:
+#    msg: "VLAN view '{{ vlanrange_name }}' not found in Infoblox"
+#  when: vlanrange_lookup.json | length == 0
 
 - name: Set VLAN view reference
   ansible.builtin.set_fact:
