@@ -165,6 +165,14 @@
         next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
       # ansible.builtin.include_tasks: vlanview2.yml
 
+    - name: CREATE NEW VLAN
+      infoblox.nios_modules.nios_vlan:
+        name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        id: "{{ next_vlan_id[0] }}"
+        parent: "{{ vlanrange_name }}"
+        state: present
+        provider: "{{ nios_provider }}"
+
     - name: CREATE NEW IPV4 NETWORK
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
