@@ -159,7 +159,7 @@
         var: networkaddr
 
     - name: GET VLAN FOR OUR NETWORK
-      ansible.builtin.include_tasks: vlanview.yml
+      ansible.builtin.include_tasks: vlanview2.yml
 
     - name: CREATE NEW IPV4 NETWORK
       infoblox.nios_modules.nios_network:
