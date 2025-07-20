@@ -1,0 +1,66 @@
+---
+###########################################################################################################
+# Call Workflow
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Calls an follow-up AAP workflow through API call
+#
+# Requirements:
+#
+###########################################################################################################
+
+- name: CALL WORKFLOW
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+  
+  tasks:
+    - name: CALL WINDOWS WORKFLOW
+      ansible.builtin.uri:
+        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/15/launch/"
+        method: POST
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        status_code: 201, 302, 200
+        headers:
+            Content-Type: "application/json"
+        body:
+          {
+              "extra_vars": {
+                "tenant": "{{ tenant }}",
+                "anp": "{{ anp }}",
+                "epg": "{{ epg }}",
+                "subnet": "{{ subnet }}"
+              }
+          }
+        body_format: json
+        validate_certs: no
+      when: os == "windows"
+
+    - name: CALL LINUX WORKFLOW
+      ansible.builtin.uri:
+        url: "http://awx.zero-days.nl:10445/api/v2/workflow_job_templates/21/launch/"
+        method: POST
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: yes        
+        status_code: 201, 302, 200
+        headers:
+            Content-Type: "application/json"
+        body:
+          {
+              "extra_vars": {
+                "tenant": "{{ tenant }}",
+                "anp": "{{ anp }}",
+                "epg": "{{ epg }}",
+                "subnet": "{{ subnet }}"
+              }
+          }
+        body_format: json
+        validate_certs: no
+      when: os == "linux"

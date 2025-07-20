@@ -1,0 +1,20 @@
+---
+- name: List installed Ansible collections
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Run ansible-galaxy collection list
+      command: ansible-galaxy collection list
+      register: collection_list_ag
+
+    - name: Print collection list
+      debug:
+        var: collection_list_ag.stdout_lines
+
+    - name: Run pip list
+      command: pip list
+      register: pip_output
+
+    - name: Print pip list
+      debug:
+        var: pip_output.stdout_lines

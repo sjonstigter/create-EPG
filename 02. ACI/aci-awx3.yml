@@ -4,7 +4,6 @@
 ###########################################################################################################
 #
 # This script performs the following steps:
-# - Query Infoblox WAPI for network subnet for Bridge Domain name in comment field
 # - Create Bridge Domain in common:default
 # - Create Subnet/gateway using ansible.utils.ipaddr
 # - Add DHCP relay label to BD
@@ -47,9 +46,9 @@
         toolserver is not defined or
         loadbalancer is not defined 
 
-    - name: SET TOOLSERVER ANP DEFINITION
+    - name: SET TOOLSERVER ANP MAPPING
       set_fact:
-        tennant_toolserver:
+        tenant_toolserver:
           shg: "shg_toolservers"
           common: "sdi_toolservers"
           ss_22: "ss_toolservers"
@@ -59,7 +58,8 @@
       set_fact:
         bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         epg_name: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-        anp_name: "{{ 'anp_' + (tennant_toolserver[tenant] if toolserver else application) }}"
+        anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver else application) }}"
+        lag_policy: "lacp_{{ vmm_domain }}"
       
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
@@ -99,7 +99,7 @@
         validate_certs: False
         tenant: "common"
         bd: "{{ bd_name }}"
-        dhcp_label: "dhcp_relay1" # Set correct dhcp relay label
+        dhcp_label: "dhcp_infoblox_ddi"
         scope: "infra"
         annotation: ""
 
@@ -154,7 +154,7 @@
         domain_type: "vmm"
         vm_provider: "vmware"
         encap_mode: "auto"
-        enhanced_lag_policy: "lacp_vmm_123" # TODO: enable lacp lag mode here
+        enhanced_lag_policy: "{{ lag_policy }}"
 
     - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
       cisco.aci.aci_epg_to_contract_master:
@@ -167,7 +167,7 @@
         ap: "{{ anp_name }}"
         epg: "{{ epg_name }}"
         contract_master_ap: "anp_contract_masters"
-        contract_master_epg: "epg_cm_{{ tenant }}_{{ os }}" # Set correct epg_cm name
+        contract_master_epg: "epg_cm_{{ tenant }}_{{ os }}"
         suppress_verification: "true" # for testing purpose only
 
     - name: ADD INSTANCEMANAGER TO LB CONTRACT IF EPG IS LB
