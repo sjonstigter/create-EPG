@@ -172,7 +172,7 @@
         vlans:
          - name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
            parent: "{{ vlanrange_name }}"
-           id: "{{ next_vlan_id[0] }}"
+           id: "{{ next_vlan_id[0] }}" #Remove [0] when using include
         #template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
         state: present
         provider: "{{ nios_provider }}"
