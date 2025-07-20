@@ -182,6 +182,7 @@
          - name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
            parent: "{{ vlanrange_name }}"
            id: "{{ next_vlan_id[0] }}" #Remove [0] when using include
+        member: "infoblox.localdomain"
         state: present
         provider: "{{ nios_provider }}"
 
@@ -194,6 +195,9 @@
           - name: router
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('-2') }}"
             use_option: false
+          - name: domain-name-servers
+            value: "1.1.1.1"
+        member: "infoblox.localdomain"
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         state: present
         provider: "{{ nios_provider }}"
