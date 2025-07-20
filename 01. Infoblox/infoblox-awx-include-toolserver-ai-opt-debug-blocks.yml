@@ -161,7 +161,8 @@
         var: networkaddr
 
     - name: GET VLAN FOR OUR NETWORK
-      next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
+      set_fact:
+        next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
       # ansible.builtin.include_tasks: vlanview2.yml
 
     - name: CREATE NEW IPV4 NETWORK
