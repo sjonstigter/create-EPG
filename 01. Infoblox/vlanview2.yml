@@ -1,6 +1,6 @@
 - name: Get VLAN view reference by name
   ansible.builtin.uri:
-    url: "https://{{ host }}/wapi/v2.13/vlanrange?name=vlan_pool"
+    url: "https://infoblox.zero-days.nl/wapi/v2.13/vlanrange?name=vlan_pool"
     method: GET
     user: "{{ username }}"
     password: "{{ password }}"
@@ -20,7 +20,7 @@
 
 - name: Request next available VLAN ID
   ansible.builtin.uri:
-    url: "https://{{ host }}/wapi/v2.13/{{ vlanrange_ref }}?_function=next_available_vlan_id"
+    url: "https://infoblox.zero-days.nl/wapi/v2.13/{{ vlanrange_ref }}?_function=next_available_vlan_id"
     method: POST
     user: "{{ username }}"
     password: "{{ password }}"
