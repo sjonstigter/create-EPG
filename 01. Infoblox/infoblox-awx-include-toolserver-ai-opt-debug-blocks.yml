@@ -189,10 +189,10 @@
       infoblox.nios_modules.nios_range:
         network: "{{ networkaddr[0] }}"
         start_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('next_usable') }}"
-        end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('usable') | last }}"
+        end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
         options:
           - name: router
-            value: "{{ (networkaddr[0] | ansible.utils.ipaddr('usable'))[-2] }}"
+            value: "{{ networkaddr[0] | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('-2') }}"
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         state: present
         provider: "{{ nios_provider }}"
