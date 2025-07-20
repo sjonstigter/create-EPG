@@ -1,29 +1,29 @@
-- name: Get VLAN view reference by name
+- name: GET VLAN POOL REFERENCE ID
   ansible.builtin.uri:
     url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/vlanrange?name={{ vlanrange_name }}"
     method: GET
-    user: "admin"
-    password: "infoblox"
+    user: "{{ nios_provider.username }}"
+    password: "{{ nios_provider.password }}"
     force_basic_auth: yes
     return_content: yes
     validate_certs: "{{ nios_provider.ssl_verify }}"
   register: vlanrange_lookup
 
-- name: Fail if VLAN view not found
+- name: FAIL IF VLAN POOL NOT FOUND
   ansible.builtin.fail:
     msg: "VLAN view '{{ vlanrange_name }}' not found in Infoblox"
   when: vlanrange_lookup.json | length == 0
 
-- name: Set VLAN view reference
+- name: SET VLAN POOL REFERENCE
   ansible.builtin.set_fact:
     vlanrange_ref: "{{ vlanrange_lookup.json[0]._ref }}"
 
-- name: Request next available VLAN ID
+- name: RREQUEST NEXT AVAILABLE VLAN ID
   ansible.builtin.uri:
     url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/{{ vlanrange_ref }}?_function=next_available_vlan_id"
     method: POST
-    user: "admin"
-    password: "infoblox"
+    user: "{{ nios_provider.username }}"
+    password: "{{ nios_provider.password }}"
     force_basic_auth: yes
     body_format: json
     body: |
@@ -34,15 +34,15 @@
     validate_certs: "{{ nios_provider.ssl_verify }}"
   register: vlan_response
 
-- name: Set fact for next available VLAN ID
+- name: SET FACT FOR NEXT AVAILABLE VLAN ID
   ansible.builtin.set_fact:
     next_vlan_id: "{{ vlan_response.json.vlan_ids[0] }}"
 
-- name: Debug output
+- name: SHOW NEXT AVAILABLE VLAN ID
   ansible.builtin.debug:
     msg: "The next available VLAN ID is {{ next_vlan_id }}"
 
-- name: Create a new vlan
+- name: CREATE NEw VLAN
   infoblox.nios_modules.nios_vlan:
     name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
     id: "{{ next_vlan_id }}"
