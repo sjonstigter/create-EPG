@@ -2,8 +2,8 @@
   ansible.builtin.uri:
     url: "https://infoblox.zero-days.nl/wapi/v2.13/vlanrange?name=vlan_pool"
     method: GET
-    user: "{{ username }}"
-    password: "{{ password }}"
+    user: "{{ provider.username }}"
+    password: "{{ provider.password }}"
     force_basic_auth: yes
     return_content: yes
     validate_certs: "{{ validate_certs }}"
@@ -22,8 +22,8 @@
   ansible.builtin.uri:
     url: "https://infoblox.zero-days.nl/wapi/v2.13/{{ vlanrange_ref }}?_function=next_available_vlan_id"
     method: POST
-    user: "{{ username }}"
-    password: "{{ password }}"
+    user: "{{ provider.username }}"
+    password: "{{ provider.password }}"
     force_basic_auth: yes
     body_format: json
     body: |
