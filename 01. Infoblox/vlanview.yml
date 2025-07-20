@@ -1,0 +1,57 @@
+---
+- name: Get Next Available VLAN ID from Infoblox
+  hosts: localhost
+  gather_facts: false
+  vars:
+    infoblox_host: "infoblox.zero-days.nl"
+    wapi_version: "v2.13"
+    vlanview_name: "test"
+    infoblox_username: "admin"
+    infoblox_password: "infoblox"
+    validate_certs: false  # Set to true in production
+
+  tasks:
+
+    - name: Get VLAN view reference by name
+      ansible.builtin.uri:
+        url: "https://{{ infoblox_host }}/wapi/{{ wapi_version }}/vlanview?name={{ vlanview_name }}"
+        method: GET
+        user: "{{ infoblox_username }}"
+        password: "{{ infoblox_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: "{{ validate_certs }}"
+      register: vlanview_lookup
+
+    - name: Fail if VLAN view not found
+      ansible.builtin.fail:
+        msg: "VLAN view '{{ vlanview_name }}' not found in Infoblox"
+      when: vlanview_lookup.json | length == 0
+
+    - name: Set VLAN view reference
+      ansible.builtin.set_fact:
+        vlanrange_ref: "{{ vlanview_lookup.json[0]._ref }}"
+
+    - name: Request next available VLAN ID
+      ansible.builtin.uri:
+        url: "https://{{ infoblox_host }}/wapi/{{ wapi_version }}/{{ vlanview_ref }}?_function=next_available_vlan_id"
+        method: POST
+        user: "{{ infoblox_username }}"
+        password: "{{ infoblox_password }}"
+        force_basic_auth: yes
+        body_format: json
+        body: |
+          {
+            "num": 1
+          }
+        return_content: yes
+        validate_certs: "{{ validate_certs }}"
+      register: vlan_response
+
+    - name: Set fact for next available VLAN ID
+      ansible.builtin.set_fact:
+        next_vlan_id: "{{ vlan_response.json.vlan_ids[0] }}"
+
+    - name: Debug output
+      ansible.builtin.debug:
+        msg: "The next available VLAN ID is {{ next_vlan_id }}"
