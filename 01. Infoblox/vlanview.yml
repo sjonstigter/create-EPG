@@ -5,7 +5,7 @@
   vars:
     infoblox_host: "infoblox.zero-days.nl"
     wapi_version: "v2.13"
-    vlanview_name: "test"
+    vlanrage_name: "vlan_pool"
     infoblox_username: "admin"
     infoblox_password: "infoblox"
     validate_certs: false  # Set to true in production
@@ -14,27 +14,27 @@
 
     - name: Get VLAN view reference by name
       ansible.builtin.uri:
-        url: "https://{{ infoblox_host }}/wapi/{{ wapi_version }}/vlanview?name={{ vlanview_name }}"
+        url: "https://{{ infoblox_host }}/wapi/{{ wapi_version }}/vlanrange?name={{ vlanrange_name }}"
         method: GET
         user: "{{ infoblox_username }}"
         password: "{{ infoblox_password }}"
         force_basic_auth: yes
         return_content: yes
         validate_certs: "{{ validate_certs }}"
-      register: vlanview_lookup
+      register: vlanrange_lookup
 
     - name: Fail if VLAN view not found
       ansible.builtin.fail:
-        msg: "VLAN view '{{ vlanview_name }}' not found in Infoblox"
-      when: vlanview_lookup.json | length == 0
+        msg: "VLAN view '{{ vlanrange_name }}' not found in Infoblox"
+      when: vlanrange_lookup.json | length == 0
 
     - name: Set VLAN view reference
       ansible.builtin.set_fact:
-        vlanview_ref: "{{ vlanview_lookup.json[0]._ref }}"
+        vlanrange_ref: "{{ vlanrange_lookup.json[0]._ref }}"
 
     - name: Request next available VLAN ID
       ansible.builtin.uri:
-        url: "https://{{ infoblox_host }}/wapi/{{ wapi_version }}/{{ vlanview_ref }}?_function=next_available_vlan_id"
+        url: "https://{{ infoblox_host }}/wapi/{{ wapi_version }}/{{ vlanrange_ref }}?_function=next_available_vlan_id"
         method: POST
         user: "{{ infoblox_username }}"
         password: "{{ infoblox_password }}"
