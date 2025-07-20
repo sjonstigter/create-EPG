@@ -5,7 +5,7 @@
   vars:
     infoblox_host: "infoblox.zero-days.nl"
     wapi_version: "v2.13"
-    vlanrage_name: "vlan_pool"
+    vlanrange_name: "vlan_pool"
     infoblox_username: "admin"
     infoblox_password: "infoblox"
     validate_certs: false  # Set to true in production
