@@ -191,10 +191,10 @@
         start_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('next_usable') }}"
         end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
         options:
-          - name: router
+          - name: "routers"
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
             use_option: false
-          - name: domain-name-servers
+          - name: "domain-name-servers"
             value: "1.1.1.1"
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         state: present
