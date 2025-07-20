@@ -41,3 +41,11 @@
 - name: Debug output
   ansible.builtin.debug:
     msg: "The next available VLAN ID is {{ next_vlan_id }}"
+
+- name: Create a new vlan
+  infoblox.nios_modules.nios_vlan:
+    name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+    id: "{{ next_vlan_id }}"
+    parent: "{{ vlanrange_name }}"
+    state: present
+    provider: "{{ nios_provider }}"
