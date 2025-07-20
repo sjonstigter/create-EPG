@@ -160,23 +160,18 @@
       debug:
         var: networkaddr
 
-    - name: CREATE VLAN FOR HYPER-V MAPPING
-      block:
+    - name: GET VLAN FOR OUR NETWORK
+      set_fact:
+        next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
+      # ansible.builtin.include_tasks: vlanview2.yml
 
-        - name: GET VLAN FOR OUR NETWORK
-          set_fact:
-            next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
-          # ansible.builtin.include_tasks: vlanview2.yml
-
-        - name: CREATE NEW VLAN
-          infoblox.nios_modules.nios_vlan:
-            name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-            id: "{{ next_vlan_id[0] }}"
-            parent: "{{ vlanrange_name }}"
-            state: present
-            provider: "{{ nios_provider }}"
-
-      when: maphyperv | default(true)
+    - name: CREATE NEW VLAN
+      infoblox.nios_modules.nios_vlan:
+        name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        id: "{{ next_vlan_id[0] }}"
+        parent: "{{ vlanrange_name }}"
+        state: present
+        provider: "{{ nios_provider }}"
 
     - name: CREATE NEW IPV4 NETWORK
       infoblox.nios_modules.nios_network:
@@ -194,6 +189,7 @@
       ansible.builtin.set_stats:
         data:
           subnet: "{{ networkaddr[0] }}"
+          vlan-id: "{{ next_vlan_id[0] }}"
 
     - name: RESTART INFOBLOX SERVICES INCLUDE
       ansible.builtin.include_tasks: restart-infoblox-services.yml
