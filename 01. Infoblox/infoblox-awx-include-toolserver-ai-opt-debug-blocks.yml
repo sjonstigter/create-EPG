@@ -190,13 +190,12 @@
         network: "{{ networkaddr[0] }}"
         start_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('next_usable') }}"
         end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
-        options:
-          - name: "routers"
-            value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
-            use_option: false
-          - name: "domain-name-servers"
-            value: "1.1.1.1"
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        options:
+          - name: router
+            value: "192.168.10.1"
+          - name: domain-name-servers
+            value: "192.168.10.2"
         state: present
         provider: "{{ nios_provider }}"
 
