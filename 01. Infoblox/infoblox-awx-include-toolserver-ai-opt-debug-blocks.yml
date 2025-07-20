@@ -189,7 +189,7 @@
       ansible.builtin.set_stats:
         data:
           subnet: "{{ networkaddr[0] }}"
-          vlan-id: "{{ next_vlan_id[0] }}"
+          vlan: "{{ next_vlan_id[0] }}"
 
     - name: RESTART INFOBLOX SERVICES INCLUDE
       ansible.builtin.include_tasks: restart-infoblox-services.yml
