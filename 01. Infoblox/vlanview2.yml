@@ -9,6 +9,10 @@
     validate_certs: no
   register: vlanrange_lookup
 
+- name: Debug output vlanrange_lookup
+  ansible.builtin.debug:
+    msg: "The vlanrange lookup is {{ vlanrange_lookup }}"
+
 #- name: Fail if VLAN view not found
 #  ansible.builtin.fail:
 #    msg: "VLAN view '{{ vlanrange_name }}' not found in Infoblox"
