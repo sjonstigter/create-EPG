@@ -177,11 +177,23 @@
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-        template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
+        #template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
         vlans:
          - name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
            parent: "{{ vlanrange_name }}"
            id: "{{ next_vlan_id[0] }}" #Remove [0] when using include
+        state: present
+        provider: "{{ nios_provider }}"
+
+    - name: CONFIGURE IPV4 DHCP RANGE
+      infoblox.nios_modules.nios_range:
+        network: "{{ networkaddr[0] }}"
+        start_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('next_usable') }}"
+        end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('usable') | last }}"
+        options:
+          - name: router
+            value: "{{ (networkaddr[0] | ansible.utils.ipaddr('usable'))[-2] }}"
+        comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         state: present
         provider: "{{ nios_provider }}"
 
