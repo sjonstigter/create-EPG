@@ -169,8 +169,8 @@
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         vlans:
          - name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-           parent: tenant
-           id: next_vlan_id
+           parent: "{{ vlanrange_name }}"
+           id: "{{ next_vlan_id }}"
         template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
         state: present
         provider: "{{ nios_provider }}"
