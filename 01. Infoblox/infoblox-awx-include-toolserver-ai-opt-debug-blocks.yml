@@ -194,6 +194,7 @@
         options:
           - name: router
             value: "192.168.10.1"
+            use_option: false
           - name: domain-name-servers
             value: "192.168.10.2"
         state: present
