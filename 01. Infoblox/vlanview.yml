@@ -30,7 +30,7 @@
 
     - name: Set VLAN view reference
       ansible.builtin.set_fact:
-        vlanrange_ref: "{{ vlanview_lookup.json[0]._ref }}"
+        vlanview_ref: "{{ vlanview_lookup.json[0]._ref }}"
 
     - name: Request next available VLAN ID
       ansible.builtin.uri:
