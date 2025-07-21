@@ -18,7 +18,7 @@
   ansible.builtin.set_fact:
     vlanrange_ref: "{{ vlanrange_lookup.json[0]._ref }}"
 
-- name: RREQUEST NEXT AVAILABLE VLAN ID
+- name: REQUEST NEXT AVAILABLE VLAN ID
   ansible.builtin.uri:
     url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/{{ vlanrange_ref }}?_function=next_available_vlan_id"
     method: POST
