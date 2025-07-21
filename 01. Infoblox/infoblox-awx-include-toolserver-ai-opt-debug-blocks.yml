@@ -188,7 +188,7 @@
           - name: domain-name-servers
             value: "192.168.10.2"
         members:
-          - name: infoblox.localdomain
+          - name: "infoblox.zero-days.nl"
         state: present
         provider: "{{ nios_provider }}"
 
