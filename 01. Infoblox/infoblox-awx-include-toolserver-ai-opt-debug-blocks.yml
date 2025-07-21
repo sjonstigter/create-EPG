@@ -187,6 +187,8 @@
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
           - name: domain-name-servers
             value: "192.168.10.2"
+        members:
+          - name: infoblox.localdomain
         state: present
         provider: "{{ nios_provider }}"
 
