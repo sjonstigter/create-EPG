@@ -185,7 +185,6 @@
         options:
           - name: routers
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
-            use_option: false
           - name: domain-name-servers
             value: "192.168.10.2"
         state: present
