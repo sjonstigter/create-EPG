@@ -5,7 +5,8 @@
 
 - name: Extract version string (e.g., 1.7.2)
   set_fact:
-    infoblox_version_str: "{{ infoblox_collection_list.stdout | regex_search('infoblox\\.nios_modules\\s+(\\S+)', '\\1') }}"
+    #infoblox_version_str: "{{ infoblox_collection_list.stdout | regex_search('infoblox\\.nios_modules\\s+(\\S+)', '\\1') }}"
+    infoblox_version_str: "{{ (infoblox_collection_list.stdout | regex_search('infoblox\\.nios_modules\\s+(\\S+)', '\\1'))[0] }}"
 
 - name: Split version into major and minor
   set_fact:
