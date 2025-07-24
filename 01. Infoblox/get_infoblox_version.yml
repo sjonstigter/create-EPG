@@ -1,13 +1,13 @@
-- name: Get infoblox.nios_modules version
+- name: GET INFOBLOX.NIOS_MODULES VERSION
   command: ansible-galaxy collection list infoblox.nios_modules
   register: infoblox_collection_list
   changed_when: false
 
-- name: Extract version string (e.g., 1.7.2)
+- name: EXTRACT VERSION STRING (e.g., 1.8.0)
   set_fact:
     infoblox_version_str: "{{ (infoblox_collection_list.stdout | regex_search('infoblox\\.nios_modules\\s+(\\S+)', '\\1'))[0] }}"
 
-- name: Split version into major and minor
+- name: SPLIT VERSION INTO MAJOR AND MINOR
   set_fact:
     infoblox_major_version: "{{ infoblox_version_str.split('.')[0] }}"
     infoblox_minor_version: "{{ infoblox_version_str.split('.')[1] }}"
