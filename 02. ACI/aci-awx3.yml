@@ -171,11 +171,14 @@
           - interface: 1/1
             leafs: 101
             pod: 1
-          - interface: 1/2
-            leafs: 101
+          - interface: 1/1
+            leafs: 102
             pod: 1
           - interface: 1/8
             leafs: 101
+            pod: 1
+          - interface: 1/8
+            leafs: 102
             pod: 1
         suppress_verification: "true" # for testing purpose only
       when: hypervextend
