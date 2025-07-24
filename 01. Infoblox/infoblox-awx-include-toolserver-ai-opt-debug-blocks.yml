@@ -200,8 +200,12 @@
         options:
           - name: routers
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
+          - name: domain-name
+            value: "mydomain.com"
           - name: domain-name-servers
             value: "192.168.10.2"
+          - name: broadcast-address
+            value: "{{ networkaddr[0] | ansible.utils.ipaddr('broadcast') }}"
         # members:
         #   - name: "infoblox.zero-days.nl"
         state: present
