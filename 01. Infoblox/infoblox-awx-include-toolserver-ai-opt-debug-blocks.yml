@@ -167,7 +167,7 @@
         - name: GET THE INFOBLOX NIOS MODULE VERSION
           ansible.builtin.include_tasks: get_infoblox_version.yml
 
-        - name: GET NEXT FREE VLAN FOR OUR NETWORK
+        - name: GET NEXT FREE VLAN FOR OUR NETWORK FROM VLAN POOL
           # Use next_vlan_id function when using infoblox.nios_modules >= version 1.8
           set_fact:
             next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
