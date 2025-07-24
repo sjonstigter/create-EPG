@@ -222,6 +222,8 @@
         start_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('next_usable') }}"
         end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
         comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        server_association_type: "MEMBER"
+        member: "infoblox.zero-days.nl" 
         # member: failover association (Intern-DHCP-FO)
         state: present
         provider: "{{ nios_provider }}"
