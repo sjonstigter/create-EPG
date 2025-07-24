@@ -15,5 +15,4 @@
 
 - name: SHOW INFOBLOX VERSION
   debug:
-    var: infoblox_major_version
-    var: infoblox_minor_version
+    msg: "infoblox_major_version={{ infoblox_major_version }}, infoblox_minor_version={{ infoblox_minor_version }}"
