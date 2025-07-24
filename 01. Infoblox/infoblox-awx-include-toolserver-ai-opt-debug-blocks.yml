@@ -32,6 +32,7 @@
       username: "{{ lookup('env', 'ANSIBLE_NET_USERNAME') }}"
       password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
       ssl_verify: false
+    bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
     wapi_version: "v2.13"
     vlanrange_name: "vlan_pool"
 
@@ -179,7 +180,7 @@
 
         - name: CREATE NEW VLAN
           infoblox.nios_modules.nios_vlan:
-            name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+            name: "{{ bd_name }}"
             id: "{{ next_vlan_id }}"
             parent: "{{ vlanrange_name }}"
             state: present
@@ -196,12 +197,12 @@
     - name: CREATE NEW IPV4 NETWORK
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
-        comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        comment: "{{ bd_name }}"
         #template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}" <- Cannot use template AND set VLAN ID
         vlans:
-         - name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+         - name: "{{ bd_name }}"
            parent: "{{ vlanrange_name }}"
-           id: "{{ next_vlan_id }}" #Remove [0] when using include method
+           id: "{{ next_vlan_id }}"
         options:
           - name: routers
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
@@ -221,9 +222,10 @@
         network: "{{ networkaddr[0] }}"
         start_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('next_usable') }}"
         end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
-        comment: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        comment: "{{ bd_name }}"
         server_association_type: "MEMBER"
         member: infoblox.zero-days.nl
+        # server_association_type: "FAILOVER"
         # member: failover association (Intern-DHCP-FO)
         state: present
         provider: "{{ nios_provider }}"
