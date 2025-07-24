@@ -164,21 +164,21 @@
     - name: CREATE VLAN FOR OUR NETWORK
       block:
 
-        - name: GET THE INFOBLOX MODULE VERSION
+        - name: GET THE INFOBLOX NIOS MODULE VERSION
           ansible.builtin.include_tasks: get_infoblox_version.yml
 
-        - name: GET VLAN FOR OUR NETWORK
+        - name: GET NEXT FREE VLAN FOR OUR NETWORK
           # Use next_vlan_id function when using infoblox.nios_modules >= version 1.8
           set_fact:
             next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
-        - name: SET COMMON VLAN VARIABLE NAME
+        - name: SET NORMALISED VLAN VARIABLE NAME
           set_fact:
             next_vlan_id: "{{ next_vlan_id[0] }}"
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
-        - name: CREATE NEW VLAN
+        - name: CREATE NEW VLAN IN INFOBLOX
           infoblox.nios_modules.nios_vlan:
             name: "{{ bd_name }}"
             id: "{{ next_vlan_id }}"
@@ -187,7 +187,7 @@
             provider: "{{ nios_provider }}"
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
-        - name: CREATE NEW VLAN THROUGH INFOBLOX WAPI
+        - name: CREATE NEW VLAN THROUGH INFOBLOX WAPI FOR OLDER NIOS MODULE VERSION
           # Use include with WAPI calls when using infoblox.nios_modules < version 1.8
           ansible.builtin.include_tasks: vlanview2.yml
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
