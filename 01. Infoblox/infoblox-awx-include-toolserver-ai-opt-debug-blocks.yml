@@ -211,8 +211,8 @@
             value: "192.168.10.2"
           - name: broadcast-address
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('broadcast') }}"
-        # members:
-        #   - name: "infoblox.zero-days.nl"
+        members:
+          - name: "infoblox.zero-days.nl"
         state: present
         provider: "{{ nios_provider }}"
 
