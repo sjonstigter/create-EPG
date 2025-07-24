@@ -163,10 +163,14 @@
     - name: CREATE VLAN FOR OUR NETWORK
       block:
 
+        - name: GET THE INFOBLOX MODULE VERSION
+          ansible.builtin.include_tasks: get_infoblox_version.yml
+
         - name: GET VLAN FOR OUR NETWORK
           # Use next_vlan_id function when using infoblox.nios_modules >= version 1.8
           set_fact:
             next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
+          when: infoblox_major_version == 1 and infoblox_minor_version >= 8
 
         - name: CREATE NEW VLAN
           infoblox.nios_modules.nios_vlan:
@@ -175,9 +179,12 @@
             parent: "{{ vlanrange_name }}"
             state: present
             provider: "{{ nios_provider }}"
+          when: infoblox_major_version == 1 and infoblox_minor_version >= 8
 
+        - name: CREATE NEW VLAN THROUGH INFOBLOX WAPI
           # Use below include when using infoblox.nios_modules < version 1.8
           # ansible.builtin.include_tasks: vlanview2.yml
+          when: infoblox_major_version == 1 and infoblox_minor_version < 8
 
       when: hypervextend | default(false)
 
