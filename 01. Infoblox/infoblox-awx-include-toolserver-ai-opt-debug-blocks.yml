@@ -172,10 +172,15 @@
             next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
+        - name: SET COMMON VLAN VARIABLE NAME
+          set_fact:
+            next_vlan_id: "{{ next_vlan_id[0] }}"
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
+
         - name: CREATE NEW VLAN
           infoblox.nios_modules.nios_vlan:
             name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-            id: "{{ next_vlan_id[0] }}"
+            id: "{{ next_vlan_id }}"
             parent: "{{ vlanrange_name }}"
             state: present
             provider: "{{ nios_provider }}"
@@ -196,7 +201,7 @@
         vlans:
          - name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
            parent: "{{ vlanrange_name }}"
-           id: "{{ next_vlan_id[0] }}" #Remove [0] when using include method
+           id: "{{ next_vlan_id }}" #Remove [0] when using include method
         options:
           - name: routers
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
@@ -225,7 +230,7 @@
       ansible.builtin.set_stats:
         data:
           subnet: "{{ networkaddr[0] }}"
-          vlan: "{{ next_vlan_id[0] }}"
+          vlan: "{{ next_vlan_id }}"
 
     - name: RESTART INFOBLOX SERVICES INCLUDE
       ansible.builtin.include_tasks: restart-infoblox-services.yml
