@@ -253,3 +253,4 @@
           tenant: "{{ tenant }}"
           anp: "{{ anp_name }}"
           epg: "{{ epg_name }}"
+          vmnetwork: "[{{ tenant }}][{{ anp_name }}][{{ epg_name }}]"
