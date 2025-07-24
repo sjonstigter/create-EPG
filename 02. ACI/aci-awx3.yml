@@ -153,6 +153,7 @@
         domain: "dom_phys_hyperv"
         domain_type: "phys"
         suppress_verification: "true" # for testing purpose only
+        annotation: ""
       when: hypervextend
 
     - name: BIND EPG STATIC HYPERV PORTS
@@ -181,6 +182,7 @@
             leafs: 102
             pod: 1
         suppress_verification: "true" # for testing purpose only
+        annotation: ""
       when: hypervextend
 
     - name: BIND EPG TO VM DOMAIN
