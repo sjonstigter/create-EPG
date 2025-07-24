@@ -10,7 +10,7 @@
 
 - name: Split version into major and minor
   set_fact:
-    infoblox_version_parts: "{{ infoblox_version_str.split('.') }}"
+    infoblox_version_parts: "{{ infoblox_version_str | split('.') }}"
     infoblox_major_version: "{{ infoblox_version_parts[0] }}"
     infoblox_minor_version: "{{ infoblox_version_parts[1] }}"
 
