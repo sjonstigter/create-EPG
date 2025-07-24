@@ -183,7 +183,7 @@
 
         - name: CREATE NEW VLAN THROUGH INFOBLOX WAPI
           # Use include with WAPI calls when using infoblox.nios_modules < version 1.8
-          # ansible.builtin.include_tasks: vlanview2.yml
+          ansible.builtin.include_tasks: vlanview2.yml
           when: infoblox_major_version == 1 and infoblox_minor_version < 8
 
       when: hypervextend | default(false)
