@@ -194,7 +194,7 @@
 
       when: hypervextend | default(false)
 
-    - name: CREATE NEW IPV4 NETWORK
+    - name: CREATE NEW IPV4 NETWORK - HYPERV
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
         comment: "{{ bd_name }}"
@@ -216,6 +216,7 @@
           - name: "infoblox.zero-days.nl"
         state: present
         provider: "{{ nios_provider }}"
+        when: hypervextend | default(false)
 
     - name: CONFIGURE IPV4 DHCP RANGE
       infoblox.nios_modules.nios_range:
@@ -229,6 +230,16 @@
         # member: failover association (Intern-DHCP-FO)
         state: present
         provider: "{{ nios_provider }}"
+        when: hypervextend | default(false)
+
+    - name: CREATE NEW IPV4 NETWORK
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        comment: "{{ bd_name }}"
+        template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
+        state: present
+        provider: "{{ nios_provider }}"
+        when: not hypervextend
 
     - name: STORE SUBNET IN ANSIBLE STATS
       ansible.builtin.set_stats:
