@@ -61,7 +61,7 @@
               $exists = $currentSubnets | Where-Object { $_.Subnet -eq "{{ subnet_cidr }}" -and $_.VlanID -eq {{ vlan_id }} }
               if (-not $exists) {
                   $newList = $currentSubnets + $subnetVlan
-                  $lnDefinition | Set-SCLogicalNetworkDefinition -SubnetVLan $newList -VMHostGroup $hostGroup
+                  $lnDefinition | Set-SCLogicalNetworkDefinition -LogicalNetworkDefinition $existingDef -VMHostGroups @($existingDef.VMHostGroups + $hostGroup)
                   Write-Host "Updated Logical Network Definition with new VLAN"
               } else {
                   Write-Host "VLAN/Subnet already exists, skipping update."
