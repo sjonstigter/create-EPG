@@ -1,9 +1,7 @@
 [windows]
-windows-host1.domain.local
+192.168.7.202
 
 [windows:vars]
-ansible_user=Administrator
-ansible_password=YourSecurePassword123
 ansible_connection=winrm
 ansible_winrm_transport=basic
 ansible_winrm_server_cert_validation=ignore
