@@ -1,0 +1,57 @@
+---
+###########################################################################################################
+# Call Workflow
+###########################################################################################################
+#
+# This script performs the following steps:
+#
+# Requirements:
+#
+###########################################################################################################
+- name: Add VLAN and subnet to SCVMM Logical Network (without IP pool)
+  hosts: windows
+  gather_facts: no
+  vars:
+    scvmm_server: "192.168.7.202"
+    logical_network_name: "LogicalNetwork_SHG-HyperV-data"
+    network_site_name: "LogicalNetwork_SHG-HyperV-data"
+    vlan_id: 2004
+    subnet_cidr: "10.10.150.0/24"
+    hostgroup_name: "Datacenter"
+    vm_network_name: "[tn_test][anp_test][epg_test]"
+    vm_subnet_name: "[tn_test][anp_test][epg_test]_0"
+ 
+  tasks:
+    - name: Add VLAN and subnet (no IP pool)
+      ansible.windows.win_powershell:
+        script: |
+          Import-Module VirtualMachineManager
+          
+          $vmmServer = Get-VMMServer -ComputerName "{{ scvmm_server }}"
+          $logicalNetwork = Get-SCLogicalNetwork -Name "{{ logical_network_name }}"
+          if (-not $logicalNetwork) {
+            throw "Logical network '{{ logical_network_name }}' not found"
+          }
+
+          $hostGroup = Get-SCVMHostGroup -Name "{{ hostgroup_name }}"
+          if (-not $hostGroup) {
+            throw "Host group '{{ hostgroup_name }}' not found"
+          }
+
+          $subnetVlan = New-SCSubnetVLan -Subnet "{{ subnet_cidr }}" -VlanID {{ vlan_id }}
+
+          # Check if network site already exists
+          $existingDef = Get-SCLogicalNetworkDefinition -LogicalNetwork $logicalNetwork | Where-Object { $_.Name -eq "{{ network_site_name }}" }
+
+          if (-not $existingDef) {
+            $lnDefinition = New-SCLogicalNetworkDefinition -Name "{{ network_site_name }}" `
+              -LogicalNetwork $logicalNetwork -VMHostGroup $hostGroup -SubnetVLan $subnetVlan
+          } else {
+            # Append VLAN to existing definition
+            Set-SCLogicalNetworkDefinition -LogicalNetworkDefinition $existingDef -AddSubnetVLan $subnetVlan
+            $lnDefinition = $existingDef
+          }
+
+          # Create a VM network and subnet (VLAN isolated)
+          $vmNetwork = New-SCVMNetwork -Name "{{ vm_network_name }}" -LogicalNetwork $logicalNetwork -IsolationType "VLANNetwork"
+          New-SCVMSubnet -Name "{{ vm_subnet_name }}" -VMNetwork $vmNetwork -LogicalNetworkDefinition $lnDefinition -SubnetVLan $subnetVlan
