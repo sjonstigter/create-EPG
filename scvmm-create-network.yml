@@ -61,13 +61,13 @@
           }
 
           # Ensure VM network exists
-          $vmNetwork = Get-SCVMNetwork -All | Where-Object { $_.Name -eq "{{ vm_network_name }}" }
+          $vmNetwork = Get-SCVMNetwork | Where-Object { $_.Name -eq "{{ vm_network_name }}" }
           if (-not $vmNetwork) {
             $vmNetwork = New-SCVMNetwork -Name "{{ vm_network_name }}" -LogicalNetwork $logicalNetwork -IsolationType "VLANNetwork"
           }
 
           # Ensure subnet exists
-          $vmSubnet = Get-SCVMSubnet -All | Where-Object {
+          $vmSubnet = Get-SCVMSubnet | Where-Object {
             $_.Name -eq "{{ vm_subnet_name }}" -and $_.VMNetwork.ID -eq $vmNetwork.ID
           }
 
