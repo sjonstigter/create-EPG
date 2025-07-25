@@ -57,25 +57,20 @@
               $newSubnets = $existingSubnets + $subnetVlan
               Set-SCLogicalNetworkDefinition -LogicalNetworkDefinition $existingDef -SubnetVLan $newSubnets
             }
-
-            # Update VMHostGroups if not already bound
-            $currentGroups = $existingDef.VMHostGroups
-            $alreadyBound = $currentGroups | Where-Object { $_.Name -eq "{{ hostgroup_name }}" }
-            if (-not $alreadyBound) {
-              $updatedGroups = $currentGroups + $hostGroup
-              Set-SCLogicalNetworkDefinition -LogicalNetworkDefinition $existingDef -VMHostGroups $updatedGroups
-            }
-
             $lnDefinition = $existingDef
           }
 
-          # Create VM network and subnet (VLAN-isolated), check existence first
-          $vmNetwork = Get-SCVMNetwork -Name "{{ vm_network_name }}" -ErrorAction SilentlyContinue
+          # Ensure VM network exists
+          $vmNetwork = Get-SCVMNetwork -All | Where-Object { $_.Name -eq "{{ vm_network_name }}" }
           if (-not $vmNetwork) {
             $vmNetwork = New-SCVMNetwork -Name "{{ vm_network_name }}" -LogicalNetwork $logicalNetwork -IsolationType "VLANNetwork"
           }
 
-          $vmSubnet = Get-SCVMSubnet -Name "{{ vm_subnet_name }}" -VMNetwork $vmNetwork -ErrorAction SilentlyContinue
+          # Ensure subnet exists
+          $vmSubnet = Get-SCVMSubnet -All | Where-Object {
+            $_.Name -eq "{{ vm_subnet_name }}" -and $_.VMNetwork.ID -eq $vmNetwork.ID
+          }
+
           if (-not $vmSubnet) {
             New-SCVMSubnet -Name "{{ vm_subnet_name }}" -VMNetwork $vmNetwork -LogicalNetworkDefinition $lnDefinition -SubnetVLan $subnetVlan
           }
