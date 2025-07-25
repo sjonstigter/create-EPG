@@ -48,7 +48,7 @@
               -LogicalNetwork $logicalNetwork -VMHostGroup $hostGroup -SubnetVLan $subnetVlan
           } else {
             # Append VLAN to existing definition
-            Set-SCLogicalNetworkDefinition -LogicalNetworkDefinition $existingDef -AddSubnetVLan $subnetVlan
+            Set-SCLogicalNetworkDefinition -LogicalNetworkDefinition $existingDef -AddSubnetVLan $subnetVlan -VMHostGroup $hostGroup
             $lnDefinition = $existingDef
           }
 
