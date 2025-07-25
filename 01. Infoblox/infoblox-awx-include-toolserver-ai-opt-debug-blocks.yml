@@ -232,7 +232,7 @@
         provider: "{{ nios_provider }}"
         when: hypervextend | default(false)
 
-    - name: CREATE NEW IPV4 NETWORK
+    - name: CREATE NEW IPV4 NETWORK FROM TEMPLATE
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
         comment: "{{ bd_name }}"
