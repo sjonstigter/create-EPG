@@ -200,9 +200,9 @@
         comment: "{{ bd_name }}"
         #template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}" <- Cannot use template AND set VLAN ID
         vlans:
-         - name: "{{ bd_name }}"
-           parent: "{{ vlanrange_name }}"
-           id: "{{ next_vlan_id }}"
+          - name: "{{ bd_name }}"
+            parent: "{{ vlanrange_name }}"
+            id: "{{ next_vlan_id }}"
         options:
           - name: routers
             value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
