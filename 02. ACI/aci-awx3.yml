@@ -154,7 +154,7 @@
         domain_type: "phys"
         suppress_verification: "true" # for testing purpose only
         annotation: ""
-      when: hypervextend
+      when: vmm_domain == "vmm_hyperv"
 
     - name: BIND EPG STATIC HYPERV PORTS
       cisco.aci.aci_bulk_static_binding_to_epg:
@@ -183,7 +183,7 @@
             pod: 1
         suppress_verification: "true" # for testing purpose only
         annotation: ""
-      when: hypervextend
+      when: vmm_domain == "vmm_hyperv"
 
     - name: BIND EPG TO VM DOMAIN
       cisco.aci.aci_epg_to_domain:
@@ -201,7 +201,7 @@
         encap_mode: "auto"
         enhanced_lag_policy: "{{ lag_policy }}"
         suppress_verification: "true" # for testing purpose only
-      when: not hypervextend
+      when: vmm_domain == "vmm_shg" or vmm_domain == "vmm_test"
 
     - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
       cisco.aci.aci_epg_to_contract_master:

@@ -192,7 +192,7 @@
           ansible.builtin.include_tasks: vlanview2.yml
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
-      when: hypervextend | default(false)
+      when: vmm_domain == "vmm_hyperv"
 
     - name: CREATE NEW IPV4 NETWORK - HYPERV
       infoblox.nios_modules.nios_network:
@@ -216,7 +216,7 @@
           - name: "infoblox.zero-days.nl"
         state: present
         provider: "{{ nios_provider }}"
-        when: hypervextend | default(false)
+        when: vmm_domain == "vmm_hyperv"
 
     - name: CONFIGURE IPV4 DHCP RANGE
       infoblox.nios_modules.nios_range:
@@ -230,7 +230,7 @@
         # member: failover association (Intern-DHCP-FO)
         state: present
         provider: "{{ nios_provider }}"
-        when: hypervextend | default(false)
+        when: vmm_domain == "vmm_hyperv"
 
     - name: CREATE NEW IPV4 NETWORK FROM TEMPLATE
       infoblox.nios_modules.nios_network:
@@ -239,7 +239,7 @@
         template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
         state: present
         provider: "{{ nios_provider }}"
-        when: not hypervextend
+        when: vmm_domain == "vmm_shg" or vmm_domain == "vmm_test"
 
     - name: STORE SUBNET IN ANSIBLE STATS
       ansible.builtin.set_stats:
