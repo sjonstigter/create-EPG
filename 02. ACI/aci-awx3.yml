@@ -141,6 +141,7 @@
         annotation: ""
 
     - name: BIND PHYSICAL HYPERV DOMAIN TO EPG
+      # When vmm_domain is Hyper-V use the Hyper-V phys dom
       cisco.aci.aci_epg_to_domain:
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
@@ -157,6 +158,7 @@
       when: vmm_domain == "vmm_hyperv"
 
     - name: BIND EPG STATIC HYPERV PORTS
+      # When vmm_domain is Hyper-V configure the static ports
       cisco.aci.aci_bulk_static_binding_to_epg:
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
@@ -186,6 +188,7 @@
       when: vmm_domain == "vmm_hyperv"
 
     - name: BIND EPG TO VM DOMAIN
+      # When vmm_domain is a vmware domain use the VMware vmm domains
       cisco.aci.aci_epg_to_domain:
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
