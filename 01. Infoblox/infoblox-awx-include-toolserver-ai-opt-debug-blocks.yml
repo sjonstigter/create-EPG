@@ -248,6 +248,7 @@
           - name: "{{ bd_name }}"
             parent: "{{ vlanrange_name }}"
             id: "{{ next_vlan_id }}"
+        member: infoblox.zero-days.nl
         state: present
         provider: "{{ nios_provider }}"
       when: vmm_domain == "vmm_hyperv"
