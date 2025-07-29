@@ -22,6 +22,10 @@
     vm_subnet_name: "{{ vmnetwork }}_0"
  
   tasks:
+    - name: ABORT IF WE DO NOT NEED TO RUN
+      ansible.builtin.meta: end_play
+      when: vmm_domain != "vmm_hyperv"
+
     - name: Add VLAN and subnet
       ansible.windows.win_powershell:
         script: |
