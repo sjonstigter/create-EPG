@@ -50,7 +50,7 @@
 
 - name: ADD VLAN TO OUR NEW NETWORK
   infoblox.nios_modules.nios_network:
-    network: "{{ toolserver_networkaddr[0] }}"
+    network: "{{ staticnetwork }}"
     vlans:
       - name: "{{ bd_name }}"
         parent: "{{ vlanrange_name }}"

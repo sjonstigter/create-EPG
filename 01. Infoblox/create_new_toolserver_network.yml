@@ -63,7 +63,7 @@
     state: present
     provider: "{{ nios_provider }}"
 
-- name: ADD VLAN TO OUR NEW NETWORK
+- name: ADD VLAN TO OUR NEW NETWORK FOR HYPER-V
   infoblox.nios_modules.nios_network:
     network: "{{ toolserver_networkaddr[0] }}"
     vlans:
