@@ -239,7 +239,7 @@
         template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
         state: present
         provider: "{{ nios_provider }}"
-      when: vmm_domain == "vmm_shg" or vmm_domain == "vmm_test"
+      #when: vmm_domain == "vmm_shg" or vmm_domain == "vmm_test"
 
     - name: ADD VLAN TO OUR NEW NETWORK
       infoblox.nios_modules.nios_network:
