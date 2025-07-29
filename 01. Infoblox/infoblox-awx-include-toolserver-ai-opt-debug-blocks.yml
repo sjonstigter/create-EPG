@@ -33,7 +33,7 @@
       password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
       ssl_verify: false
     bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-    subnetmask: "{{ subnetmask | int }}"
+    #subnetmask: "{{ subnetmask | int }}"
     wapi_version: "v2.13"
     vlanrange_name: "vlan_pool"
 
