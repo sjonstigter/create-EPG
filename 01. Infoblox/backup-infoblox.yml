@@ -1,0 +1,264 @@
+---
+###########################################################################################################
+# Create Infoblox network
+###########################################################################################################
+#
+# This playbook performs the following steps:
+# - Lookup the Infoblox network container for the requested application.
+# - If the requested application has no network container a new Infoblox network container will be created 
+#   (/24 network container).
+# - Filter the application network containers per requested environment (dev, tst, acc, prd).
+# - If the application has no network container for the requested environment (dev, tst, acc, prd) a new 
+#   Infoblox network container for the application + environment will be created.
+# - Request a new network from the application network container with the specified subnetmask size.
+# - If the network container does not have enough space left to register the new network with the requested 
+#   subnetmask size (ie if the network container is full) a new Infoblox network container for the 
+#   application is created.
+# - Finally it registers a new network for the application in the selected network container with the 
+#   requested subnetmask size.
+#
+# Requirements:
+# - Python infoblox-client module (pip install infoblox-client)
+# - infoblox.nios_modules ansible module (ansible-galaxy collection install infoblox.nios_modules)
+#
+###########################################################################################################
+- hosts: nios
+  connection: local
+  name: ALLOCATE INFOBLOX SUBNET
+
+  vars:
+    nios_provider:
+      host: "{{ inventory_hostname }}"
+      username: "{{ lookup('env', 'ANSIBLE_NET_USERNAME') }}"
+      password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
+      ssl_verify: false
+    bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+    wapi_version: "v2.13"
+    vlanrange_name: "vlan_pool"
+
+    tenant_container:
+      shg: "10.221.0.0/16"
+      common: "10.229.0.0/16"
+      ss_22: "10.221.0.0/16"
+
+  tasks:
+    - name: FAIL IF MANDATORY VARS ARE MISSING
+      fail:
+        msg: "One or more required variables are undefined!"
+      when: >
+        tenant is not defined or
+        application is not defined or
+        cust_environment is not defined or
+        os is not defined or
+        vmm_domain is not defined or
+        subnetmask is not defined or
+        toolserver is not defined or
+        loadbalancer is not defined or
+        dhcp is not defined
+
+    - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
+      ansible.builtin.include_tasks: create_new_toolserver_network.yml
+      when: toolserver | default(false)
+
+    - name: INCLUDE SPECIAL CASE FOR STATIC NETWORK
+      ansible.builtin.include_tasks: create_new_static_network.yml
+      when: staticnetwork is defined and staticnetwork is not none and staticnetwork | length > 0
+
+    - name: GET NETWORK CONTAINERS FOR REQUESTED APPLICATION
+      set_fact:
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+    - name: DEBUG APPLICATION NETWORK CONTAINER RESULT
+      debug:
+        var: network_container_result
+
+    - name: CREATE APPLICATION CONTAINER IF NONE EXISTS
+      block:
+
+        - name: CREATE NEW APPLICATION NETWORK CONTAINER
+          ansible.builtin.include_tasks: create_new_container.yml
+
+        - name: RERUN LOOKUP AFTER NEW APPLICATION NETWORK CONTAINER CREATED
+          set_fact:
+            network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+        - name: DEBUG APPLICATION NETWORK CONTAINER RESULT AFTER CREATION
+          debug:
+            var: network_container_result
+
+      when: network_container_result | length == 0
+
+    - name: FILTER CONTAINERS BY ENVIRONMENT
+      set_fact:
+        env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'search', cust_environment) | list }}"
+
+    - name: DEBUG ENVIRONMENT NETWORK CONTAINERS
+      debug:
+        var: env_network_containers
+
+    - name: CREATE NETWORK CONTAINER IF NO ENVIRONMENT-SPECIFIC EXISTS
+      block:
+
+        - name: CREATE NEW ENVIRONMENT-SPECIFIC NETWORK CONTAINER
+          ansible.builtin.include_tasks: create_new_container.yml
+
+        - name: RERUN LOOKUP AFTER NEW ENVIRONMENT NETWORK CONTAINER CREATED
+          set_fact:
+            env_network_containers: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+
+        - name: DEBUG ENVIRONMENT NETWORK CONTAINERS AFTER CREATION
+          debug:
+            var: env_network_containers
+
+      when: env_network_containers | length == 0
+
+    - name: SELECT NETWORK CONTAINER WITH HIGHEST SUBNET-ID
+      set_fact:
+        max_subnet: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
+
+    - name: DEBUG SELECTED CONTAINER
+      debug:
+        var: max_subnet
+
+    - name: REQUEST NEW SUBNET FROM NETWORK CONTAINER
+      block:
+
+        - name: GET NEXT AVAILABLE SUBNET FROM SELECTED NETWORK CONTAINER
+          set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', max_subnet.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
+
+        - name: DEBUG SUBNET LOOKUP RESULT
+          debug:
+            var: networkaddr
+
+        - name: HANDLE NETWORK CONTAINER FULL CONDITION
+          set_fact:
+            subnet_full: true
+          when: networkaddr | length == 0 or networkaddr is not defined
+
+      rescue:
+        - name: SET SUBNET FULL IN CASE OF ERROR
+          set_fact:
+            subnet_full: true
+
+    - name: CREATE NEW CONTAINER AND GET SUBNET IF CONTAINER IS FULL
+      block:
+
+        - name: CREATE NEW NETWORK CONTAINER
+          ansible.builtin.include_tasks: create_new_container.yml
+
+        - name: GET NEXT AVAILABLE SUBNET FROM NEWLY CREATED CONTAINER
+          set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0], cidr=subnetmask, provider=nios_provider) }}"
+
+        - name: DEBUG NEW SUBNET ADDRESS
+          debug:
+            var: networkaddr
+
+      when: subnet_full | default(false)
+
+    - name: SHOW ALLOCATED SUBNET
+      debug:
+        var: networkaddr
+
+    - name: CREATE VLAN FOR OUR NETWORK
+      block:
+
+        - name: GET THE INFOBLOX NIOS MODULE VERSION
+          ansible.builtin.include_tasks: get_infoblox_version.yml
+
+        - name: GET NEXT FREE VLAN FOR OUR NETWORK FROM VLAN POOL
+          # Use next_vlan_id function when using infoblox.nios_modules >= version 1.8
+          set_fact:
+            next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
+
+        - name: SET NORMALISED VLAN VARIABLE NAME
+          set_fact:
+            next_vlan_id: "{{ next_vlan_id[0] }}"
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
+
+        - name: CREATE NEW VLAN IN INFOBLOX
+          infoblox.nios_modules.nios_vlan:
+            name: "{{ bd_name }}"
+            id: "{{ next_vlan_id }}"
+            parent: "{{ vlanrange_name }}"
+            state: present
+            provider: "{{ nios_provider }}"
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
+
+        - name: CREATE NEW VLAN THROUGH INFOBLOX WAPI FOR OLDER NIOS MODULE VERSION
+          # Use include with WAPI calls when using infoblox.nios_modules < version 1.8
+          ansible.builtin.include_tasks: vlanview2.yml
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
+
+      when: vmm_domain == "vmm_hyperv"
+
+    - name: CREATE NEW IPV4 NETWORK - HYPERV
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        comment: "{{ bd_name }}"
+        #template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}" <- Cannot use template AND set VLAN ID
+        vlans:
+          - name: "{{ bd_name }}"
+            parent: "{{ vlanrange_name }}"
+            id: "{{ next_vlan_id }}"
+        options:
+          - name: routers
+            value: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
+          - name: domain-name
+            value: "mydomain.com"
+          - name: domain-name-servers
+            value: "192.168.10.2"
+          - name: broadcast-address
+            value: "{{ networkaddr[0] | ansible.utils.ipaddr('broadcast') }}"
+        members:
+          - name: "infoblox.zero-days.nl"
+        state: present
+        provider: "{{ nios_provider }}"
+      when: vmm_domain == "vmm_hyperv2"
+
+    - name: CONFIGURE IPV4 DHCP RANGE
+      infoblox.nios_modules.nios_range:
+        network: "{{ networkaddr[0] }}"
+        start_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('next_usable') }}"
+        end_addr: "{{ networkaddr[0] | ansible.utils.ipaddr('last_usable') }}"
+        comment: "{{ bd_name }}"
+        server_association_type: "MEMBER"
+        member: infoblox.zero-days.nl
+        # server_association_type: "FAILOVER"
+        # member: failover association (Intern-DHCP-FO)
+        state: present
+        provider: "{{ nios_provider }}"
+      when: vmm_domain == "vmm_hyperv2"
+
+    - name: CREATE NEW IPV4 NETWORK FROM TEMPLATE
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        comment: "{{ bd_name }}"
+        template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
+        state: present
+        provider: "{{ nios_provider }}"
+      #when: vmm_domain == "vmm_shg" or vmm_domain == "vmm_test"
+
+    - name: ADD VLAN TO OUR NEW NETWORK
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        vlans:
+          - name: "{{ bd_name }}"
+            parent: "{{ vlanrange_name }}"
+            id: "{{ next_vlan_id }}"
+        members:
+          - name: "infoblox.zero-days.nl"
+        state: present
+        provider: "{{ nios_provider }}"
+      when: vmm_domain == "vmm_hyperv"
+
+    - name: STORE SUBNET IN ANSIBLE STATS
+      ansible.builtin.set_stats:
+        data:
+          subnet: "{{ networkaddr[0] }}"
+          vlan: "{{ next_vlan_id }}"
+
+    - name: RESTART INFOBLOX SERVICES INCLUDE
+      ansible.builtin.include_tasks: restart-infoblox-services.yml
