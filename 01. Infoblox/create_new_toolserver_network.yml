@@ -48,6 +48,11 @@
       ansible.builtin.include_tasks: vlanview2.yml
       when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
+    - name: STORE VLAN IN ANSIBLE STATS
+      ansible.builtin.set_stats:
+        data:
+          vlan: "{{ next_vlan_id }}"
+
   when: vmm_domain == "vmm_hyperv"
 
 - name: CREATE IPV4 TOOLSERVER NETWORK WITH INFOBLOX TEMPLATE
@@ -75,7 +80,6 @@
   ansible.builtin.set_stats:
     data:
       subnet: "{{ toolserver_networkaddr[0] }}"
-      vlan: "{{ next_vlan_id }}"
 
 #    - name: RESTART INFOBLOX DHCP SERVICE
 #      nios_restartservices:
