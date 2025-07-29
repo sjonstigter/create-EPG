@@ -25,23 +25,30 @@
     - name: Add VLAN and subnet
       ansible.windows.win_powershell:
         script: |
+          # Import Powershell modules
           if (-not (Get-Module -Name VirtualMachineManager)) {
               Import-Module VirtualMachineManager
           }
 
+          # Connect to SCVMM Server
           $vmmServer = Get-VMMServer -ComputerName "{{ scvmm_server }}"
+
+          # Get Logical Network
           $logicalNetwork = Get-SCLogicalNetwork -Name "{{ logical_network_name }}"
           if (-not $logicalNetwork) {
             throw "Logical network '{{ logical_network_name }}' not found"
           }
 
+          # Get VM Host Group
           $hostGroup = Get-SCVMHostGroup -Name "{{ hostgroup_name }}"
           if (-not $hostGroup) {
             throw "Host group '{{ hostgroup_name }}' not found"
           }
 
+          # Create or get SubnetVlan object
           $subnetVlan = New-SCSubnetVLan -Subnet "{{ subnet_cidr }}" -VlanID {{ vlan_id }}
 
+          # Check for existing Logical Network Definition for the site
           $existingDef = Get-SCLogicalNetworkDefinition -LogicalNetwork $logicalNetwork | Where-Object { $_.Name -eq "{{ network_site_name }}" }
 
           if (-not $existingDef) {
