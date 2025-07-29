@@ -8,7 +8,7 @@
 # Requirements:
 #
 ###########################################################################################################
-- name: Add VLAN and subnet to SCVMM Logical Network (without IP pool)
+- name: Add VLAN and subnet to SCVMM Logical Network
   hosts: windows
   gather_facts: no
   vars:
