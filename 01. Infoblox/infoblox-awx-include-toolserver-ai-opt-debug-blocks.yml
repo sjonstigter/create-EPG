@@ -172,12 +172,12 @@
           # Use next_vlan_id function when using infoblox.nios_modules >= version 1.8
           set_fact:
             next_vlan_id: "{{ lookup('infoblox.nios_modules.nios_next_vlan_id', parent=vlanrange_name, provider=nios_provider) }}"
-          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 9
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
         - name: SET NORMALISED VLAN VARIABLE NAME
           set_fact:
             next_vlan_id: "{{ next_vlan_id[0] }}"
-          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 9
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
         - name: CREATE NEW VLAN IN INFOBLOX
           infoblox.nios_modules.nios_vlan:
@@ -186,12 +186,12 @@
             parent: "{{ vlanrange_name }}"
             state: present
             provider: "{{ nios_provider }}"
-          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 9
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
         - name: CREATE NEW VLAN THROUGH INFOBLOX WAPI FOR OLDER NIOS MODULE VERSION
           # Use include with WAPI calls when using infoblox.nios_modules < version 1.8
           ansible.builtin.include_tasks: vlanview2.yml
-          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 9
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
         - name: STORE VLAN IN ANSIBLE STATS
           ansible.builtin.set_stats:
@@ -208,7 +208,7 @@
         state: present
         provider: "{{ nios_provider }}"
 
-    - name: ADD VLAN TO NETWORK
+    - name: ADD VLAN TO THE NEW NETWORK
       block:
 
         - name: GET NETWORK REFERENCE
@@ -221,12 +221,15 @@
             return_content: yes
             validate_certs: "{{ nios_provider.ssl_verify }}"
           register: network_ref_lookup
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
-        - name: SET FACT FOR NEXT AVAILABLE VLAN ID
+        - name: SET FACT FOR NETWORK REFERENCE
           ansible.builtin.set_fact:
             network_ref: "{{ network_ref_lookup.json[0]._ref }}"
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
-        - name: ADD VLAN TO OUR NEW NETWORK THROUGH WAPI
+        - name: ADD VLAN TO OUR NEW NETWORK THROUGH INFOBLOX WAPI FOR OLDER NIOS MODULE VERSION
+          # If infoblox.nios_modules version is < 1.8 we cannot use buildin VLAN functions and have to fallback to Infoblox WAPI
           ansible.builtin.uri:
             url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/{{ network_ref }}"
             method: PUT
@@ -245,9 +248,10 @@
               }
             return_content: yes
             validate_certs: "{{ nios_provider.ssl_verify }}"
-          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 9
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
-        - name: ADD VLAN TO OUR NEW NETWORK
+        - name: ADD VLAN TO OUR NEW NETWORK THROUGH ANSIBLE NIOS MODULE
+          # Use buildin VLAN functions if infoblox.nios_modules is version 1.8 or newer
           infoblox.nios_modules.nios_network:
             network: "{{ networkaddr[0] }}"
             vlans:
@@ -258,7 +262,7 @@
               - name: "infoblox.zero-days.nl"
             state: present
             provider: "{{ nios_provider }}"
-          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 9
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
       when: vmm_domain == "vmm_hyperv"
 
