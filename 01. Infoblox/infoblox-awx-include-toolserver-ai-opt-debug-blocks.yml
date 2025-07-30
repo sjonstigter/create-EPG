@@ -200,41 +200,6 @@
 
       when: vmm_domain == "vmm_hyperv"
 
-    - name: ADD VLAN TO OUR NEW NETWORK THROUGH WAPI
-      ansible.builtin.uri:
-        url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/network"
-        method: POST
-        user: "{{ nios_provider.username }}"
-        password: "{{ nios_provider.password }}"
-        status_code: 200, 201
-        force_basic_auth: yes
-        body_format: json
-        body: |
-          {
-            "network": "{{ networkaddr[0] }}",
-            "vlans": [
-              {
-                "vlan": "{{ vlan_full_ref }}"
-              }
-            ]
-          }
-        return_content: yes
-        validate_certs: "{{ nios_provider.ssl_verify }}"
-      when: vmm_domain == "vmm_hyperv"
-
-    - name: ADD VLAN TO OUR NEW NETWORK
-      infoblox.nios_modules.nios_network:
-        network: "{{ networkaddr[0] }}"
-        vlans:
-          - name: "{{ bd_name }}"
-            parent: "{{ vlanrange_name }}"
-            id: "{{ next_vlan_id }}"
-        members:
-          - name: "infoblox.zero-days.nl"
-        state: present
-        provider: "{{ nios_provider }}"
-      when: vmm_domain == "vmm_hyperv2"
-
     - name: CREATE NEW IPV4 NETWORK FROM TEMPLATE
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
@@ -242,6 +207,61 @@
         template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
         state: present
         provider: "{{ nios_provider }}"
+
+    - name: ADD VLAN TO NETWORK
+      block:
+
+        - name: GET NETWORK REFERENCE
+          ansible.builtin.uri:
+            url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/network?network={{ networkaddr[0] }}"
+            method: GET
+            user: "{{ nios_provider.username }}"
+            password: "{{ nios_provider.password }}"
+            force_basic_auth: yes
+            return_content: yes
+            validate_certs: "{{ nios_provider.ssl_verify }}"
+          register: network_ref_lookup
+
+        - name: SET FACT FOR NEXT AVAILABLE VLAN ID
+          ansible.builtin.set_fact:
+            network_ref: "{{ network_ref_lookup.json[0]._ref }}"
+
+        - name: ADD VLAN TO OUR NEW NETWORK THROUGH WAPI
+          ansible.builtin.uri:
+            url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/{{ network_ref }}"
+            method: PUT
+            user: "{{ nios_provider.username }}"
+            password: "{{ nios_provider.password }}"
+            status_code: 200, 201
+            force_basic_auth: yes
+            body_format: json
+            body: |
+              {
+                "network": "{{ networkaddr[0] }}",
+                "vlans": [
+                  {
+                    "vlan": "{{ vlan_full_ref }}"
+                  }
+                ]
+              }
+            return_content: yes
+            validate_certs: "{{ nios_provider.ssl_verify }}"
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 9
+
+        - name: ADD VLAN TO OUR NEW NETWORK
+          infoblox.nios_modules.nios_network:
+            network: "{{ networkaddr[0] }}"
+            vlans:
+              - name: "{{ bd_name }}"
+                parent: "{{ vlanrange_name }}"
+                id: "{{ next_vlan_id }}"
+            members:
+              - name: "infoblox.zero-days.nl"
+            state: present
+            provider: "{{ nios_provider }}"
+          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 9
+
+      when: vmm_domain == "vmm_hyperv"
 
     - name: STORE SUBNET IN ANSIBLE STATS
       ansible.builtin.set_stats:
