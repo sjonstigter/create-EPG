@@ -202,7 +202,7 @@
 
     - name: ADD VLAN TO OUR NEW NETWORK THROUGH WAPI
       ansible.builtin.uri:
-        url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/vlan"
+        url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/network"
         method: POST
         user: "{{ nios_provider.username }}"
         password: "{{ nios_provider.password }}"
