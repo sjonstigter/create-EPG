@@ -54,7 +54,7 @@
       {
         "name": "{{ bd_name }}",
         "parent": "{{ vlanrange_ref }}",
-        "id": "{{ next_vlan_id }}"
+        "id": {{ next_vlan_id }}
       }
     validate_certs: "{{ nios_provider.ssl_verify }}"
 
