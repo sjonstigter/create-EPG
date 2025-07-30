@@ -200,28 +200,23 @@
 
       when: vmm_domain == "vmm_hyperv"
 
-    - name: CREATE NEW IPV4 NETWORK FROM TEMPLATE
-      infoblox.nios_modules.nios_network:
-        network: "{{ networkaddr[0] }}"
-        comment: "{{ bd_name }}"
-        template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
-        state: present
-        provider: "{{ nios_provider }}"
-
- #   - name: ADD VLAN TO OUR NEW NETWORK THROUGH WAPI
- #     ansible.builtin.uri:
- #       url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/{{ vlanrange_ref }}?_function=next_available_vlan_id"
- #       method: POST
- #       user: "{{ nios_provider.username }}"
- #       password: "{{ nios_provider.password }}"
- #       force_basic_auth: yes
- #       body_format: json
- #       body: |
- #         {
- #           "num": 1
- #         }
- #       return_content: yes
- #       validate_certs: "{{ nios_provider.ssl_verify }}"
+    - name: ADD VLAN TO OUR NEW NETWORK THROUGH WAPI
+      ansible.builtin.uri:
+        url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/vlan"
+        method: POST
+        user: "{{ nios_provider.username }}"
+        password: "{{ nios_provider.password }}"
+        force_basic_auth: yes
+        body_format: json
+        body: |
+          {
+            "name": "{{ bd_name }}",
+            "parent": "{{ vlan_full_ref }}",
+            "id": {{ next_vlan_id }}
+          }
+        return_content: yes
+        validate_certs: "{{ nios_provider.ssl_verify }}"
+      when: vmm_domain == "vmm_hyperv"
 
     - name: ADD VLAN TO OUR NEW NETWORK
       infoblox.nios_modules.nios_network:
@@ -234,7 +229,15 @@
           - name: "infoblox.zero-days.nl"
         state: present
         provider: "{{ nios_provider }}"
-      when: vmm_domain == "vmm_hyperv"
+      when: vmm_domain == "vmm_hyperv2"
+
+    - name: CREATE NEW IPV4 NETWORK FROM TEMPLATE
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        comment: "{{ bd_name }}"
+        template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
+        state: present
+        provider: "{{ nios_provider }}"
 
     - name: STORE SUBNET IN ANSIBLE STATS
       ansible.builtin.set_stats:
