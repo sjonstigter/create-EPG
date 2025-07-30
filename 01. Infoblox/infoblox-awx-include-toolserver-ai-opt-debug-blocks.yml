@@ -210,9 +210,12 @@
         body_format: json
         body: |
           {
-            "name": "{{ bd_name }}",
-            "parent": "{{ vlan_full_ref }}",
-            "id": {{ next_vlan_id }}
+            "network": "{{ networkaddr[0] }}",
+            "vlans": [
+              {
+                "vlan": "{{ vlan_full_ref }}"
+              }
+            ]
           }
         return_content: yes
         validate_certs: "{{ nios_provider.ssl_verify }}"
