@@ -64,7 +64,3 @@
 - name: SET FACT FOR FULL VLAN CODE
   ansible.builtin.set_fact:
     vlan_full_ref: "{{ vlan_create_response.json }}"
-
-- name: SHOW FULL VLAN CODE
-  ansible.builtin.debug:
-    msg: "{{ vlan_full_ref }}"
