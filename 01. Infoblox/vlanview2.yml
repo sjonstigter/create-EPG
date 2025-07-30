@@ -61,6 +61,10 @@
     validate_certs: "{{ nios_provider.ssl_verify }}"
   register: vlan_create_response
 
-- name: SET FACT FOR FULL VLAN REF
+- name: SET FACT FOR FULL VLAN CODE
+  ansible.builtin.set_fact:
+    vlan_full_ref: "{{ vlan_create_response.json.vlan_ids[0] }}"
+
+- name: SHOW FULL VLAN CODE
   ansible.builtin.debug:
-    var: "{{ vlan_create_response }}"
+    msg: "{{ vlan_full_ref }}"
