@@ -206,6 +206,7 @@
         method: POST
         user: "{{ nios_provider.username }}"
         password: "{{ nios_provider.password }}"
+        status_code: 200, 201
         force_basic_auth: yes
         body_format: json
         body: |
