@@ -57,5 +57,10 @@
         "parent": "{{ vlanrange_ref }}",
         "id": {{ next_vlan_id }}
       }
+    return_content: yes
     validate_certs: "{{ nios_provider.ssl_verify }}"
+  register: vlan_create_response
 
+- name: SET FACT FOR FULL VLAN REF
+  ansible.builtin.debug:
+    var: "{{ vlan_create_response }}"
