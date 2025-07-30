@@ -237,7 +237,6 @@
             body_format: json
             body: |
               {
-                "network": "{{ networkaddr[0] }}",
                 "vlans": [
                   {
                     "vlan": "{{ vlan_full_ref }}"
