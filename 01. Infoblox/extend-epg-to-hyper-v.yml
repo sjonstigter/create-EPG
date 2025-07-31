@@ -80,22 +80,9 @@
             provider: "{{ nios_provider }}"
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
-        - name: GET NETWORK REFERENCE
-          # If infoblox.nios_modules version is < 1.8 we cannot use buildin VLAN functions and have to fallback to Infoblox WAPI
-          ansible.builtin.uri:
-            url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/network?network={{ network_result[0].network }}"
-            method: GET
-            user: "{{ nios_provider.username }}"
-            password: "{{ nios_provider.password }}"
-            force_basic_auth: yes
-            return_content: yes
-            validate_certs: "{{ nios_provider.ssl_verify }}"
-          register: network_ref_lookup
-          when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
-
         - name: SET FACT FOR NETWORK REFERENCE
           ansible.builtin.set_fact:
-            network_ref: "{{ network_ref_lookup.json[0]._ref }}"
+            network_ref: "{{ network_result[0]._ref }}"
           when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
         - name: ADD VLAN TO OUR NEW NETWORK THROUGH INFOBLOX WAPI FOR OLDER NIOS MODULE VERSION
