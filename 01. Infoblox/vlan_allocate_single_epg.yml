@@ -5,7 +5,7 @@
 
 - name: LOOKUP NETWORK FOR REQUESTED EPG
   set_fact:
-    network_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'network', filter={'comment': bd_name}, return_fields=['network', '_ref'], provider=nios_provider, wantlist=True) }}"
+    network_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'network', filter={'comment': bd_name}, return_fields=['network'], provider=nios_provider, wantlist=True) }}"
 
 - name: DEBUG NETWORK RESULT
   debug:
