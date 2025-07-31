@@ -69,7 +69,7 @@
         - name: ADD VLAN TO OUR NEW NETWORK THROUGH ANSIBLE NIOS MODULE
           # Use buildin VLAN functions if infoblox.nios_modules is version 1.8 or newer
           infoblox.nios_modules.nios_network:
-            network: "{{ network_result[0] }}"
+            network: "{{ network_result[0].network }}"
             vlans:
               - name: "{{ bd_name }}"
                 parent: "{{ vlanrange_name }}"
@@ -83,7 +83,7 @@
         - name: GET NETWORK REFERENCE
           # If infoblox.nios_modules version is < 1.8 we cannot use buildin VLAN functions and have to fallback to Infoblox WAPI
           ansible.builtin.uri:
-            url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/network?network={{ network_result[0] }}"
+            url: "https://{{ nios_provider.host }}/wapi/{{ wapi_version }}/network?network={{ network_result[0].network }}"
             method: GET
             user: "{{ nios_provider.username }}"
             password: "{{ nios_provider.password }}"
