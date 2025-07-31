@@ -25,7 +25,7 @@
 
     - name: DEBUG NETWORK RESULT
       debug:
-        var: network_result.network
+        var: network_result.json[0].network
 
     - name: CREATE VLAN FOR OUR NETWORK
       block:
