@@ -2,7 +2,8 @@
 infoblox.zero-days.nl
 
 [apic]
-sandboxapicdc.cisco.com
+192.168.7.151
 
 [panorama]
 panorama.zero-days.nl
+
