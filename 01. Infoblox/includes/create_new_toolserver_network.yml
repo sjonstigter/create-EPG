@@ -128,7 +128,7 @@
       subnet: "{{ toolserver_networkaddr[0] }}"
 
 - name: RESTART INFOBLOX SERVICES INCLUDE
-  ansible.builtin.include_tasks: restart-infoblox-services.yml
+  ansible.builtin.include_tasks: includes/restart-infoblox-services.yml
 
 - name: END PLAY - NOTHING MORE TO DO
   ansible.builtin.meta: end_play
