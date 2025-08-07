@@ -171,18 +171,18 @@
         encap_id: "{{ vlan }}"
         interface_mode: trunk
         interface_configs:
-          - interface: 1/1
-            leafs: 101
-            pod: 1
-          - interface: 1/1
-            leafs: 102
+          - interface: 1/8
+            leafs: 125
             pod: 1
           - interface: 1/8
-            leafs: 101
+            leafs: 126
             pod: 1
-          - interface: 1/8
-            leafs: 102
-            pod: 1
+          - interface: 1/6
+            leafs: 231
+            pod: 2
+          - interface: 1/6
+            leafs: 232
+            pod: 2
         suppress_verification: "true" # for testing purpose only
         annotation: ""
       when: vmm_domain == "vmm_hyperv"
