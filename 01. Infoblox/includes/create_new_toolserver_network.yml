@@ -21,7 +21,7 @@
   block:
 
     - name: GET THE INFOBLOX NIOS MODULE VERSION
-      ansible.builtin.include_tasks: get_infoblox_version.yml
+      ansible.builtin.include_tasks: includes/get_infoblox_version.yml
 
     - name: GET NEXT FREE VLAN FOR OUR NETWORK FROM VLAN POOL
       # Use next_vlan_id function when using infoblox.nios_modules >= version 1.8
@@ -34,18 +34,13 @@
         next_vlan_id: "{{ next_vlan_id[0] }}"
       when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
-    - name: CREATE NEW VLAN IN INFOBLOX
-      infoblox.nios_modules.nios_vlan:
-        name: "{{ bd_name }}"
-        id: "{{ next_vlan_id }}"
-        parent: "{{ vlanrange_name }}"
-        state: present
-        provider: "{{ nios_provider }}"
+    - name: CREATE NEW VLAN THROUGH NIOS_MODULES FOR RECENT NIOS MODULE VERSION
+      ansible.builtin.include_tasks: includes/create-vlan-infoblox_nios_modules.yml
       when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) >= 8
 
     - name: CREATE NEW VLAN THROUGH INFOBLOX WAPI FOR OLDER NIOS MODULE VERSION
       # Use include with WAPI calls when using infoblox.nios_modules < version 1.8
-      ansible.builtin.include_tasks: vlanview2.yml
+      ansible.builtin.include_tasks: includes/create-vlan-infoblox_wapi.yml
       when: (infoblox_major_version | int) == 1 and (infoblox_minor_version | int) < 8
 
     - name: STORE VLAN IN ANSIBLE STATS
