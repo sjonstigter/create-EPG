@@ -39,7 +39,7 @@
 
     - name: CREATE NETWORK OBJECT THROUGH API
       block:
-          
+
         - name: GET API KEY
           ansible.builtin.uri:
             url: "https://{{ provider.ip_address }}/api/?type=keygen&user={{ provider.username }}&password={{ provider.password }}"
