@@ -51,11 +51,11 @@
 
     - name: SHOW API KEY
       debug:
-        var: api_key
+        var: api_key.0
 
     - name: Add address object via API
       ansible.builtin.uri:
-        url: "https://{{ provider.ip_address }}/api/?key={{ api_key }}&type=config&action=set&xpath=/config/shared/address/entry[@name='{{ obj_name }}'] &element=<ip-netmask>{{ subnet }}</ip-netmask>"
+        url: "https://{{ provider.ip_address }}/api/?key={{ api_key.0 }}&type=config&action=set&xpath=/config/shared/address/entry[@name='{{ obj_name }}'] &element=<ip-netmask>{{ subnet }}</ip-netmask>"
         method: POST
         validate_certs: no
 
