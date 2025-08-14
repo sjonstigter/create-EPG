@@ -11,6 +11,9 @@
 # - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
 # - Python module pan-python (pip install pan-python) when using panos_module, else use API
 #
+# Notes:
+# - Set use_panos variable to True to use ansible module instead of API
+#
 ###########################################################################################################
 
 - name: CREATE PALO ALTO OBJECT
