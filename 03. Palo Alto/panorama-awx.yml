@@ -69,7 +69,7 @@
 
     - name: SHOW API RESPONSE
       debug:
-        var: api_response
+        var: api_response.content
 
     - name: COMMIT THROUGH API
       uri:
@@ -79,14 +79,15 @@
         body_format: form-urlencoded
         body:
           type: commit
-          cmd: "<commit><shared-policy/></commit>"
+#          cmd: "<commit><shared-policy/></commit>"
+          cmd: "<commit><partial><admin>{{ provider.username }}</admin></partial></commit>"
           key: "{{ api_key.0 }}"
         return_content: yes
       register: commit_response
 
     - name: SHOW COMMIT RESPONSE
       debug:
-        msg: "{{ commit_response.content }}"
+        var: commit_response.content
 
     - name: CREATE NETWORK OBJECT THROUGH PANOS MODULE
       block:
