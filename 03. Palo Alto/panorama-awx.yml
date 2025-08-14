@@ -54,7 +54,7 @@
         var: api_key
 
     - name: Add address object via API
-      uri:
+      ansible.builtin.uri:
         url: "https://{{ provider.ip_address }}/api/"
         method: POST
         validate_certs: no
@@ -64,7 +64,7 @@
           action: set
           key: "{{ api_key }}"
           xpath: "/config/shared/address"
-          element: "<entry name=obj_name><ip-netmask>subnet</ip-netmask></entry>"
+          element: "<entry name={{ obj_name }}><ip-netmask>{{ subnet }}</ip-netmask></entry>"
 
     - name: CREATE NETWORK OBJECT THROUGH PANOS MODULE
       block:
