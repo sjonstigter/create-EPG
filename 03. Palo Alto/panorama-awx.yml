@@ -75,6 +75,7 @@
             var: api_response.content
 
         - name: FAIL IF API RESPONSE CONTAINS ERROR
+          # Palo Alto API doesn't do proper error http response, fail job if response contains error
           ansible.builtin.fail:
             msg: "API call failed: {{ api_response.content }}"
           when: "'status=\"error\"' in api_response.content"
