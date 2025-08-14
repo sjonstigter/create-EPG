@@ -9,7 +9,7 @@
 # Requirements:
 # - ansible>=2.15.0
 # - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
-# - Python module pan-python (pip install pan-python)
+# - Python module pan-python (pip install pan-python) when using panos_module, else use API
 #
 ###########################################################################################################
 
@@ -37,57 +37,61 @@
       set_fact:
         obj_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
 
-    - name: GET API KEY
-      ansible.builtin.uri:
-        url: "https://{{ provider.ip_address }}/api/?type=keygen&user={{ provider.username }}&password={{ provider.password }}"
-        method: GET
-        return_content: yes
-        validate_certs: no
-      register: key_response
+    - name: CREATE NETWORK OBJECT THROUGH API
+      block:
+          
+        - name: GET API KEY
+          ansible.builtin.uri:
+            url: "https://{{ provider.ip_address }}/api/?type=keygen&user={{ provider.username }}&password={{ provider.password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+          register: key_response
 
-    - name: EXTRACT API KEY FROM RESPONSE
-      set_fact:
-        api_key: "{{ key_response.content | regex_search('<key>([^<]+)</key>', '\\1') }}"
+        - name: EXTRACT API KEY FROM RESPONSE
+          set_fact:
+            api_key: "{{ key_response.content | regex_search('<key>([^<]+)</key>', '\\1') }}"
 
-    - name: Add address object via API
-      ansible.builtin.uri:
-        url: "https://{{ provider.ip_address }}/api/"
-        method: POST
-        validate_certs: no
-        body_format: form-urlencoded
-        body:
-          type: config
-          action: set
-          key: "{{ api_key.0 }}"
-          xpath: "/config/shared/address"
-          element: |
-            <entry name='{{ obj_name }}'>
-              <ip-netmask>{{ subnet }}</ip-netmask>
-            </entry>
-        return_content: yes
-      register: api_response
+        - name: ADD ADDRESS OBJECT WITH API
+          ansible.builtin.uri:
+            url: "https://{{ provider.ip_address }}/api/"
+            method: POST
+            validate_certs: no
+            body_format: form-urlencoded
+            body:
+              type: config
+              action: set
+              key: "{{ api_key.0 }}"
+              xpath: "/config/shared/address"
+              element: |
+                <entry name='{{ obj_name }}'>
+                  <ip-netmask>{{ subnet }}</ip-netmask>
+                </entry>
+            return_content: yes
+          register: api_response
 
-    - name: SHOW API RESPONSE
-      debug:
-        var: api_response.content
+        - name: SHOW API RESPONSE
+          debug:
+            var: api_response.content
 
-    - name: COMMIT THROUGH API
-      uri:
-        url: "https://{{ provider.ip_address }}/api/"
-        method: POST
-        validate_certs: no
-        body_format: form-urlencoded
-        body:
-          type: commit
-#          cmd: "<commit><shared-policy/></commit>"
-          cmd: "<commit><partial><admin>{{ provider.username }}</admin></partial></commit>"
-          key: "{{ api_key.0 }}"
-        return_content: yes
-      register: commit_response
+        - name: COMMIT THROUGH API
+          uri:
+            url: "https://{{ provider.ip_address }}/api/"
+            method: POST
+            validate_certs: no
+            body_format: form-urlencoded
+            body:
+              type: commit
+              cmd: "<commit><partial><admin>{{ provider.username }}</admin></partial></commit>"
+              key: "{{ api_key.0 }}"
+            return_content: yes
+          register: commit_response
 
-    - name: SHOW COMMIT RESPONSE
-      debug:
-        var: commit_response.content
+        - name: SHOW COMMIT RESPONSE
+          debug:
+            var: commit_response.content
+
+      when: not use_panos | default(false)
 
     - name: CREATE NETWORK OBJECT THROUGH PANOS MODULE
       block:
