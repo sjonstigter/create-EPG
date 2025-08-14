@@ -66,8 +66,8 @@
           key: "{{ api_key.0 }}"
           xpath: "/config/shared/address"
           element: |
-            <entry name='Web_Server_01'>
-              <ip-netmask>192.168.1.100</ip-netmask>
+            <entry name='{{ obj_name }}'>
+              <ip-netmask>{{ subnet }}</ip-netmask>
               <description>Web server for app</description>
             </entry>
       register: api_response
