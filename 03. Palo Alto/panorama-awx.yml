@@ -49,13 +49,8 @@
       set_fact:
         api_key: "{{ key_response.content | regex_search('<key>([^<]+)</key>', '\\1') }}"
 
-    - name: SHOW API KEY
-      debug:
-        var: api_key.0
-
     - name: Add address object via API
       ansible.builtin.uri:
- #       url: "https://{{ provider.ip_address }}/api/?key={{ api_key.0 }}&type=config&action=set&xpath=/config/shared/address/entry[@name='{{ obj_name }}'] &element=<ip-netmask>{{ subnet }}</ip-netmask>"
         url: "https://{{ provider.ip_address }}/api/"
         method: POST
         validate_certs: no
@@ -68,13 +63,30 @@
           element: |
             <entry name='{{ obj_name }}'>
               <ip-netmask>{{ subnet }}</ip-netmask>
-              <description>Web server for app</description>
             </entry>
+        return_content: yes
       register: api_response
 
     - name: SHOW API RESPONSE
       debug:
         var: api_response
+
+    - name: COMMIT THROUGH API
+      uri:
+        url: "https://{{ provider.ip_address }}/api/"
+        method: POST
+        validate_certs: no
+        body_format: form-urlencoded
+        body:
+          type: commit
+          cmd: "<commit><shared-policy/></commit>"
+          key: "{{ api_key.0 }}"
+        return_content: yes
+      register: commit_response
+
+    - name: SHOW COMMIT RESPONSE
+      debug:
+        msg: "{{ commit_response.content }}"
 
     - name: CREATE NETWORK OBJECT THROUGH PANOS MODULE
       block:
