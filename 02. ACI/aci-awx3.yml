@@ -58,7 +58,7 @@
           shg: "shg_toolservers"
           common: "sdi_toolservers"
           ss_22: "ss_toolservers"
-      when: toolserver
+      when: toolserver is true
 
     - name: SET COMMON NAMES 
       set_fact:
