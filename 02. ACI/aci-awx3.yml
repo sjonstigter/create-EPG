@@ -239,7 +239,7 @@
         contract: "con_instancemanager_to_lb"
         contract_type: "provider"
         suppress_verification: "true" # for testing purpose only
-      when: loadbalancer
+      when: loadbalancer is true
 
     - name: ADD LB TO INSTANCEMANAGER CONTRACT IF EPG IS LB
       cisco.aci.aci_epg_to_contract:
@@ -254,7 +254,7 @@
         contract: "con_lb_to_instancemanager"
         contract_type: "consumer"
         suppress_verification: "true" # for testing purpose only
-      when: loadbalancer
+      when: loadbalancer is true
 
     - name: SET STAT THE TENNANT-ANP-EPG FOR FURTHER WORKFLOW
       ansible.builtin.set_stats:
