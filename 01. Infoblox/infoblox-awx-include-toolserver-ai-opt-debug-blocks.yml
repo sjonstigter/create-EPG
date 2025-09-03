@@ -59,13 +59,13 @@
 
     - name: NORMALISE INPUT VALUES TO BOOLEAN WHERE NEEDED
       set_fact:
-        toolserver: "{{ toolserver | bool }}"
+        #toolserver: "{{ toolserver | bool }}"
         loadbalancer: "{{ loadbalancer | bool }}"
         dhcp: "{{ dhcp | bool }}"
 
     - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
       ansible.builtin.include_tasks: includes/create_new_toolserver_network.yml
-      when: toolserver is true | default(false)
+      when: toolserver|default(false)|bool
 
     - name: INCLUDE SPECIAL CASE FOR STATIC NETWORK
       ansible.builtin.include_tasks: includes/create_new_static_network.yml
