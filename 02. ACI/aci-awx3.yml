@@ -64,7 +64,7 @@
       set_fact:
         bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         epg_name: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
-        anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver else application) }}"
+        anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver is true else application) }}"
         lag_policy: "lacp_{{ vmm_domain }}"
       
     - name: CREATE BRIDGE DOMAIN
