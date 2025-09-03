@@ -54,7 +54,7 @@
   infoblox.nios_modules.nios_network:
     network: "{{ toolserver_networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
     comment: "{{ bd_name }}"
-    template: "network29{% if not dhcp %}_nodhcp{% endif %}"
+    template: "network29{% if not ( dhcp | bool ) %}_nodhcp{% endif %}"
     state: present
     provider: "{{ nios_provider }}"
 
