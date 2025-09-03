@@ -57,12 +57,6 @@
         loadbalancer is not defined or
         dhcp is not defined
 
-    - name: NORMALISE INPUT VALUES TO BOOLEAN WHERE NEEDED
-      set_fact:
-        #toolserver: "{{ toolserver | bool }}"
-        loadbalancer: "{{ loadbalancer | bool }}"
-        dhcp: "{{ dhcp | bool }}"
-
     - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
       ansible.builtin.include_tasks: includes/create_new_toolserver_network.yml
       when: toolserver|default(false)|bool
