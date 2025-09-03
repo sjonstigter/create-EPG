@@ -46,12 +46,6 @@
         toolserver is not defined or
         loadbalancer is not defined
 
-    - name: NORMALISE INPUT VALUES TO BOOLEAN WHERE NEEDED
-      set_fact:
-        #toolserver: "{{ toolserver | bool }}"
-        loadbalancer: "{{ loadbalancer | bool }}"
-        dhcp: "{{ dhcp | bool }}"
-
     - name: SET TOOLSERVER ANP MAPPING
       set_fact:
         tenant_toolserver:
@@ -66,7 +60,7 @@
         epg_name: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
         anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver|bool else application) }}"
         lag_policy: "lacp_{{ vmm_domain }}"
-      
+
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
         host: "{{ inventory_hostname }}"
@@ -239,7 +233,7 @@
         contract: "con_instancemanager_to_lb"
         contract_type: "provider"
         suppress_verification: "true" # for testing purpose only
-      when: loadbalancer is true
+      when: loadbalancer|default(false)|bool
 
     - name: ADD LB TO INSTANCEMANAGER CONTRACT IF EPG IS LB
       cisco.aci.aci_epg_to_contract:
@@ -254,7 +248,7 @@
         contract: "con_lb_to_instancemanager"
         contract_type: "consumer"
         suppress_verification: "true" # for testing purpose only
-      when: loadbalancer is true
+      when: loadbalancer|default(false)|bool
 
     - name: SET STAT THE TENNANT-ANP-EPG FOR FURTHER WORKFLOW
       ansible.builtin.set_stats:
