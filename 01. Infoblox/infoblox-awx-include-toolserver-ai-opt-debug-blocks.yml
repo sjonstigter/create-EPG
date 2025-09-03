@@ -65,7 +65,7 @@
 
     - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
       ansible.builtin.include_tasks: includes/create_new_toolserver_network.yml
-      when: toolserver | default(false)
+      when: toolserver
 
     - name: INCLUDE SPECIAL CASE FOR STATIC NETWORK
       ansible.builtin.include_tasks: includes/create_new_static_network.yml
