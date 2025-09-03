@@ -44,7 +44,13 @@
         subnetmask is not defined or
         subnet is not defined or
         toolserver is not defined or
-        loadbalancer is not defined 
+        loadbalancer is not defined
+
+    - name: NORMALISE INPUT VALUES TO BOOLEAN WHERE NEEDED
+      set_fact:
+        toolserver: "{{ toolserver | bool }}"
+        loadbalancer: "{{ loadbalancer | bool }}"
+        dhcp: "{{ dhcp | bool }}"
 
     - name: SET TOOLSERVER ANP MAPPING
       set_fact:
