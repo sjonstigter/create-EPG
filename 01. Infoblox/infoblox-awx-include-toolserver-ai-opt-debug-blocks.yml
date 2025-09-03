@@ -199,7 +199,7 @@
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
         comment: "{{ bd_name }}"
-        template: "network{{ subnetmask }}{% if not dhcp %}_nodhcp{% endif %}"
+        template: "network{{ subnetmask }}{% if not ( dhcp | bool ) %}_nodhcp{% endif %}"
         state: present
         provider: "{{ nios_provider }}"
 
