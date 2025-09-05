@@ -23,3 +23,22 @@
       when: subnet is defined and subnet is not none and subnet | length > 0
 
   when: "'mssqlv1' in application"
+
+- name: OVERWRITE COMMON NAMES FOR OPENSHIFT CASE
+  block:
+
+    - name: SET BD/EPG/ANP NAMES FOR OPENSHIFT
+      set_fact:
+        # SET NAMES TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
+        # FOR INSTANCE: epg_openshift_prd_master
+        bd_name: "bd_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }}"
+        epg_name: "epg_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }}"
+        anp_name: "anp_{{ application }}"
+
+    - name: SET FIREWALL OBJECT NAME FOR MSSQLV1
+      set_fact:
+      # SET FIREWALL OBJECT NAME TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
+        obj_name: "bd_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }} - {{ subnet | replace('/','_') }}"
+      when: subnet is defined and subnet is not none and subnet | length > 0
+
+  when: "'openshift' in application"
