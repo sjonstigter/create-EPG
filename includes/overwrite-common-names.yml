@@ -4,7 +4,7 @@
 # DEFAULT COMMON NAMING FORMAT IS: <bd/epg>_<application>_<function>_<environment> (AFE FORMAT)
 ###########################################################################################################
 
-- name: OVERWRITE COMMON NAMES FOR MSSQLV1 CASE
+- name: OVERWRITE COMMON NAMES FOR MSSQLV1 CASE TO AEF
   block:
 
     - name: SET BD/EPG/ANP NAMES FOR MSSQLV1
@@ -24,7 +24,7 @@
 
   when: "'mssqlv1' in application"
 
-- name: OVERWRITE COMMON NAMES FOR OPENSHIFT CASE
+- name: OVERWRITE COMMON NAMES FOR OPENSHIFT CASE TO AEF
   block:
 
     - name: SET BD/EPG/ANP NAMES FOR OPENSHIFT
