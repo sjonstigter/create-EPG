@@ -40,6 +40,9 @@
       set_fact:
         obj_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
 
+    - name: INCLUDE SPECIAL CASE FOR FORMAT OVERIDES
+      ansible.builtin.include_tasks: ../includes/overwrite-common-names.yml
+
     - name: CREATE NETWORK OBJECT THROUGH API
       block:
 
