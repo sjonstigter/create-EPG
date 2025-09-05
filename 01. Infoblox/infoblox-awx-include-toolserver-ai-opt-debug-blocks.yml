@@ -57,6 +57,9 @@
         loadbalancer is not defined or
         dhcp is not defined
 
+    - name: INCLUDE SPECIAL CASE FOR FORMAT OVERIDES
+      ansible.builtin.include_tasks: ../includes/overwrite-common-names.yml
+
     - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
       ansible.builtin.include_tasks: includes/create_new_toolserver_network.yml
       when: toolserver|default(false)|bool

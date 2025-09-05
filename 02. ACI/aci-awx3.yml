@@ -61,6 +61,9 @@
         anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver|bool else application) }}"
         lag_policy: "lacp_{{ vmm_domain }}"
 
+    - name: INCLUDE SPECIAL CASE FOR FORMAT OVERIDES
+      ansible.builtin.include_tasks: ../includes/overwrite-common-names.yml
+
     - name: CREATE BRIDGE DOMAIN
       cisco.aci.aci_bd:
         host: "{{ inventory_hostname }}"
