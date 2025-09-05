@@ -1,5 +1,5 @@
 ###########################################################################################################
-# USE THIS FILE TO OVERIDE THE DEFAULT COMMON NAMES IF REQUIRED FOR CERTAIN APPLICATIONS
+# USE THIS FILE TO OVERWRITE THE DEFAULT COMMON NAMES IF REQUIRED FOR CERTAIN APPLICATIONS
 #
 # DEFAULT COMMON NAMING FORMAT IS: <bd/epg>_<application>_<function>_<environment> (AFE FORMAT)
 ###########################################################################################################
