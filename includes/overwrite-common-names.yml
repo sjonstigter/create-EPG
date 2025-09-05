@@ -7,7 +7,7 @@
 - name: OVERWRITE COMMON NAMES FOR MSSQLV1 CASE
   block:
 
-    - name: SET BD/EPG/ANP NAMES TO USE
+    - name: SET BD/EPG/ANP NAMES FOR MSSQLV1
       set_fact:
         # SET NAMES TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
         # FOR INSTANCE: epg_mssqlv1_prd_sdipsql9999
@@ -16,8 +16,9 @@
         # SET CORRECT ANP TO USE FOR MSSQLV1
         anp_name: "anp_mssqlv1_dbserver"
 
-    - name: SET FIREWALL OBJECT NAME
+    - name: SET FIREWALL OBJECT NAME FOR MSSQLV1
       set_fact:
+      # SET FIREWALL OBJECT NAME TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
         obj_name: "bd_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }} - {{ subnet | replace('/','_') }}"
       when: subnet is defined and subnet is not none and subnet | length > 0
 
