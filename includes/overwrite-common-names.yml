@@ -4,7 +4,7 @@
 # DEFAULT COMMON NAMING FORMAT IS: <bd/epg>_<application>_<function>_<environment>
 ###########################################################################################################
 
-- name: SET COMMON NAMES FOR MSSQLV1 CASE
+- name: OVERWRITE COMMON NAMES FOR MSSQLV1 CASE
   set_fact:
     # SET NAMES TO <bd/epg>_<application>_<environment>_<function> FORMAT
     # FOR INSTANCE: epg_mssqlv1_prd_sdipsql9999
