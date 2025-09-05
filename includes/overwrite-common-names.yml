@@ -24,6 +24,11 @@
 
   when: "'mssqlv1' in application"
 
+- name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR MSSQLV1 AOC
+  set_fact:
+    application: "mssqlv1_aoc"
+  when: "'mssqlv1' in application and 'aoc' in function"
+
 - name: OVERWRITE COMMON NAMES FOR OPENSHIFT CASE TO AEF
   block:
 
