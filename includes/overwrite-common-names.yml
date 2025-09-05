@@ -26,6 +26,7 @@
 
 - name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR MSSQLV1 AOC
   set_fact:
+    # FORCE THE NETWORK CONTAINER TO USE TO mssqlv1_aoc
     application: "mssqlv1_aoc"
   when: "'mssqlv1' in application and 'aoc' in function"
 
