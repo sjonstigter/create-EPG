@@ -1,0 +1,21 @@
+all:
+  children:
+    netapp_clusters:
+      children:
+        ha_pairs:
+          children:
+            hapair1:
+              hosts:
+                clusterC:
+                  ansible_host: na00-tst.zero-days.nl
+
+    pure_clusters:
+      children:
+        active_clusters:
+          children:
+            activecluster1:
+              hosts:
+                fa1:
+                  ansible_host: ps21.zero-days.nl
+                fa2:
+                  ansible_host: ps24.zero-days.nl
