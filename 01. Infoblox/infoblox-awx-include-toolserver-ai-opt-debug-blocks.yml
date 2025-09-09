@@ -70,7 +70,7 @@
 
     - name: GET NETWORK CONTAINERS FOR REQUESTED APPLICATION
       set_fact:
-        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application_lookup | default(application)}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
     - name: DEBUG APPLICATION NETWORK CONTAINER RESULT
       debug:
@@ -84,7 +84,7 @@
 
         - name: RERUN LOOKUP AFTER NEW APPLICATION NETWORK CONTAINER CREATED
           set_fact:
-            network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+            network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application_lookup | default(application)}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
         - name: DEBUG APPLICATION NETWORK CONTAINER RESULT AFTER CREATION
           debug:
@@ -108,7 +108,7 @@
 
         - name: RERUN LOOKUP AFTER NEW ENVIRONMENT NETWORK CONTAINER CREATED
           set_fact:
-            env_network_containers: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+            env_network_containers: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application_lookup | default(application)}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
 
         - name: DEBUG ENVIRONMENT NETWORK CONTAINERS AFTER CREATION
           debug:
