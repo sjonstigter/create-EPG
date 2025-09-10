@@ -27,19 +27,19 @@
 - name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR MSSQLV1 AOC
   set_fact:
     # FORCE THE NETWORK CONTAINER TO USE TO mssqlv1_aoc
-    application: "mssqlv1_aoc"
+    application_lookup: "mssqlv1_aoc"
   when: "'mssqlv1' in application and 'aoc' in function"
 
 - name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR ASB
   set_fact:
     # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FUNCTION
-    application: "{{ application }}_{{ function }}"
+    application_lookup: "{{ application }}_{{ function }}"
   when: "'asb' in application"
 
 - name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR AAP
   set_fact:
     # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FUNCTION
-    application: "{{ application }}_{{ function }}"
+    application_lookup: "{{ application }}_{{ function }}"
   when: "'aap' in application"
 
 - name: OVERWRITE COMMON NAMES FOR OPENSHIFT CASE TO AEF
