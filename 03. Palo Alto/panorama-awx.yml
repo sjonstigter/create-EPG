@@ -12,7 +12,7 @@
 # - Python module pan-python (pip install pan-python) when using panos_module, else use API
 #
 # Notes:
-# - Set use_panos variable to True to use ansible module instead of API
+# - Set use_panos variable to True to use ansible module instead of API (requires pan-python)
 #
 ###########################################################################################################
 
