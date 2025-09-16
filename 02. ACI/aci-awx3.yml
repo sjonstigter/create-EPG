@@ -74,7 +74,7 @@
         tenant: "common"
         bd: "{{ bd_name }}"
         vrf: "default"
-        description: "ICD#{{ ticket_num }}"
+        description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided
         annotation: ""
         arp_flooding: "true"
         endpoint_move_detect: "garp"
@@ -140,7 +140,7 @@
         ap: "{{ anp_name }}"
         epg: "{{ epg_name }}"
         bd: "{{ bd_name }}"
-        description: "ICD#{{ ticket_num }}"
+        description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided
         annotation: ""
 
     - name: BIND PHYSICAL HYPERV DOMAIN TO EPG
