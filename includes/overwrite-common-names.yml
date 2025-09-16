@@ -45,15 +45,15 @@
 - name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR GMI
   # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FIRST 4 
   # CHARACTERS FROM FUNCTION USING VARIABLE SLICING FOR LVNL
-  # FOR INSTANCE: application: gmi + function: lvnlarch -> gmi_lvnl
+  # FOR INSTANCE: application: gmi + function: lvnlarch -> gmi_lvnl (application_function[:4])
 
   # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FIRST 2 
   # CHARACTERS FROM FUNCTION USING VARIABLE SLICING FOR DT
-  # FOR INSTANCE: application: gmi + function: dtarch -> gmi_dt
+  # FOR INSTANCE: application: gmi + function: dtarch -> gmi_dt (application_function[:2])
 
   # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FIRST 3 
   # CHARACTERS FROM FUNCTION USING VARIABLE SLICING FOR OTHERS
-  # FOR INSTANCE: application: gmi + function: prkarch -> gmi_prk
+  # FOR INSTANCE: application: gmi + function: prkarch -> gmi_prk (application_function[:3])
   set_fact:
     application_lookup: >-
       {{ application }}_{{ 
