@@ -42,6 +42,14 @@
     application_lookup: "{{ application }}_{{ function }}"
   when: "'aap' in application"
 
+- name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR GMI
+  set_fact:
+    # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FIRST 3 
+    # CHARACTERS FROM FUNCTION USING VARIABLE SLICING
+    # FOR INSTANCE: application: gmi + function: prkarch -> gmi_prk
+    application_lookup: "{{ application }}_{{ function[:3] }}"
+  when: "'gmi' in application"
+
 - name: OVERWRITE COMMON NAMES FOR OPENSHIFT CASE TO AEF
   block:
 
