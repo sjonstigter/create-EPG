@@ -43,6 +43,10 @@
       ss_22: "10.221.0.0/16"
 
   tasks:
+    - name: REMAP VARIABLES IF NEEDED
+      set_fact:
+        cust_environment: "{{ cust_environment | default(envtype, true) }}"
+
     - name: FAIL IF MANDATORY VARS ARE MISSING
       fail:
         msg: "One or more required variables are undefined!"
