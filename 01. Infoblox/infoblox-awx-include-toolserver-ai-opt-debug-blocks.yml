@@ -152,7 +152,7 @@
 
         - name: GET NEXT AVAILABLE SUBNET FROM SELECTED NETWORK CONTAINER
           set_fact:
-            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', max_subnet.network, cidr=subnetmask, provider=nios_provider, errors='ignore') }}"
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', max_subnet.network, cidr=subnetmask|int, provider=nios_provider, errors='ignore') }}"
 
         - name: DEBUG SUBNET LOOKUP RESULT
           debug:
@@ -176,7 +176,7 @@
 
         - name: GET NEXT AVAILABLE SUBNET FROM NEWLY CREATED CONTAINER
           set_fact:
-            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0], cidr=subnetmask, provider=nios_provider) }}"
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0], cidr=subnetmask|int provider=nios_provider) }}"
 
         - name: DEBUG NEW SUBNET ADDRESS
           debug:
@@ -225,7 +225,7 @@
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
         comment: "{{ bd_name }}"
-        template: "network{{ subnetmask }}{% if not ( dhcp | bool ) %}_nodhcp{% endif %}"
+        template: "network{{ subnetmask|int }}{% if not ( dhcp | bool ) %}_nodhcp{% endif %}"
         state: present
         provider: "{{ nios_provider }}"
 
