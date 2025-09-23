@@ -8,10 +8,31 @@
       set_fact:
         parsed_vm_definitions: "{{ vm_definitions | from_yaml }}"
 
-    - name: Extract vm_tenant
+    - name: Extract vm_values
       set_fact:
         vm_tenant: "{{ parsed_vm_definitions.vm_definitions[0].vm_tenant }}"
+        vm_application: "{{ parsed_vm_definitions.vm_definitions[0].vm_application }}"
+        vm_function: "{{ parsed_vm_definitions.vm_definitions[0].vm_function }}"
+        vm_envtype: "{{ parsed_vm_definitions.vm_definitions[0].vm_envtype }}"
+        vm_os: "{{ parsed_vm_definitions.vm_definitions[0].vm_os }}"
+        vm_vmm_domain: "{{ parsed_vm_definitions.vm_definitions[0].vm_vmm_domain }}"
+        vm_subnetmask: "{{ parsed_vm_definitions.vm_definitions[0].vm_subnetmask }}"
+        vm_toolserver: "{{ parsed_vm_definitions.vm_definitions[0].vm_toolserver }}"
+        vm_loadbalancer: "{{ parsed_vm_definitions.vm_definitions[0].vm_loadbalancer }}"
+        vm_dhcp: "{{ parsed_vm_definitions.vm_definitions[0].vm_dhcp }}"
+      when: vm_definitions is defined
 
-    - name: Show the extracted vm_tenant
+    - name: Show extracted values
       debug:
-        msg: "vm_tenant is {{ vm_tenant }}"
+        msg:
+          tenant: "{{ vm_tenant }}"
+          application: "{{ vm_application }}"
+          function: "{{ vm_function }}"
+          envtype: "{{ vm_envtype }}"
+          os: "{{ vm_os }}"
+          vmm_domain: "{{ vm_vmm_domain }}"
+          subnetmask: "{{ vm_subnetmask }}"
+          toolserver: "{{ vm_toolserver }}"
+          loadbalancer: "{{ vm_loadbalancer }}"
+          dhcp: "{{ vm_dhcp }}"
+      when: vm_definitions is defined
