@@ -56,7 +56,7 @@
         cust_environment: "{{ parsed_vm_definitions.epg_definitions[0].epg_envtype }}"
         os: "{{ parsed_vm_definitions.epg_definitions[0].epg_os }}"
         vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain }}"
-        subnetmask: "{{ parsed_vm_definitions.epg_definitions[0].epg_subnetmask }}"
+        subnetmask: "{{ parsed_vm_definitions.epg_definitions[0].epg_subnetmask | int }}"
         toolserver: "{{ parsed_vm_definitions.epg_definitions[0].epg_toolserver }}"
         loadbalancer: "{{ parsed_vm_definitions.epg_definitions[0].epg_loadbalancer }}"
         dhcp: "{{ parsed_vm_definitions.epg_definitions[0].epg_dhcp }}"
