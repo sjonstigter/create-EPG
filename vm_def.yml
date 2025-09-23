@@ -1,0 +1,22 @@
+---
+- name: List all extra vars
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Get all variables including extra vars
+      ansible.builtin.set_fact:
+        all_vars: "{{ vars }}"
+
+    - name: Display only extra_vars
+      ansible.builtin.debug:
+        msg: >
+          {% for key, value in all_vars.items() %}
+            {% if key in extra_var_keys %}
+              {{ key }}: {{ value }}
+            {% endif %}
+          {% endfor %}
+
+    - name: Show all available variables (optional for debugging)
+      ansible.builtin.debug:
+        var: all_vars
