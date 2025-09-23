@@ -1,0 +1,20 @@
+---
+- name: CREATE ACI EPG
+  hosts: apic
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Pass variables to SDDC workflow
+      ansible.builtin.set_stats:
+        data:
+          tenant: "shg"
+          application: "myapp3"
+          function: "wftest_01"
+          envtype: "tst"
+          os: "windows"
+          vmm_domain: "vmm_shg"
+          subnetmask: 28
+          toolserver: false
+          loadbalancer: false
+          dhcp: true
