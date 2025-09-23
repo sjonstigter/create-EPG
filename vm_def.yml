@@ -2,21 +2,16 @@
 - name: List all extra vars
   hosts: localhost
   gather_facts: false
+
   tasks:
+    - name: Load the YAML string into a dictionary
+      set_fact:
+        parsed_vm_definitions: "{{ vm_definitions | from_yaml }}"
 
-    - name: Get all variables including extra vars
-      ansible.builtin.set_fact:
-        all_vars: "{{ vars }}"
+    - name: Extract vm_tenant
+      set_fact:
+        vm_tenant: "{{ parsed_vm_definitions.vm_definitions[0].vm_tenant }}"
 
-    - name: Display only extra_vars
-      ansible.builtin.debug:
-        msg: >
-          {% for key, value in all_vars.items() %}
-            {% if key in extra_var_keys %}
-              {{ key }}: {{ value }}
-            {% endif %}
-          {% endfor %}
-
-    - name: Show all available variables (optional for debugging)
-      ansible.builtin.debug:
-        var: all_vars
+    - name: Show the extracted vm_tenant
+      debug:
+        msg: "vm_tenant is {{ vm_tenant }}"
