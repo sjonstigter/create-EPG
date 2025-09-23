@@ -62,6 +62,10 @@
         dhcp: "{{ parsed_vm_definitions.epg_definitions[0].epg_dhcp }}"
       when: vars.get('vm_definitions', None) is not none
 
+    - name: FORCE TO INTEGER
+      set_fact:
+        subnetmask: "{{ subnetmask | int }}"
+
     - name: FAIL IF MANDATORY VARS ARE MISSING
       fail:
         msg: "One or more required variables are undefined!"
