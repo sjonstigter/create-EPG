@@ -137,6 +137,26 @@
         l3out: "l3out_common-default"
         suppress_verification: "true" # for testing purpose only
 
+    - name: ATTACH MONITORING POLICY THROUGH REST CALL
+      cisco.aci.aci_rest:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        path: /api/mo/uni.json
+        method: post
+        content:
+          {
+            "fvRsABDPolMonPol": {
+              "attributes": {
+                "annotation": "",
+                "tnMonEPGPolName": "default",
+                "userdom": ":all:mgmt:common:"
+              }
+            }
+          }
+
     - name: CREATE APPLICATION PROFILE
       cisco.aci.aci_ap:
         host: "{{ inventory_hostname }}"
