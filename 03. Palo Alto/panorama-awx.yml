@@ -37,7 +37,7 @@
       set_fact:
         tenant: "{{ parsed_vm_definitions.epg_definitions[0].epg_tenant }}"
         application: "{{ parsed_vm_definitions.epg_definitions[0].epg_application }}"
-        function: "{{ parsed_vm_definitions.epg_definitions[0].epg_function }}"
+        function: "{{ parsed_vm_definitions.epg_definitions[0].epg_function | default('') }}"
         cust_environment: "{{ parsed_vm_definitions.epg_definitions[0].epg_envtype }}"
         os: "{{ parsed_vm_definitions.epg_definitions[0].epg_os }}"
         vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain }}"
