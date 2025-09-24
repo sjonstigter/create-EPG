@@ -22,6 +22,25 @@
     vm_subnet_name: "{{ vmnetwork }}_0"
  
   tasks:
+    - name: LOAD SDIW VM_DEFINITIONS YAML STRING INTO DICTIONNARY
+      set_fact:
+        parsed_vm_definitions: "{{ vm_definitions | from_yaml }}"
+      when: vars.get('vm_definitions', None) is not none
+
+    - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW
+      set_fact:
+        tenant: "{{ parsed_vm_definitions.epg_definitions[0].epg_tenant }}"
+        application: "{{ parsed_vm_definitions.epg_definitions[0].epg_application }}"
+        function: "{{ parsed_vm_definitions.epg_definitions[0].epg_function | default('') }}"
+        cust_environment: "{{ parsed_vm_definitions.epg_definitions[0].epg_envtype }}"
+        os: "{{ parsed_vm_definitions.epg_definitions[0].epg_os }}"
+        vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain }}"
+        subnetmask: "{{ parsed_vm_definitions.epg_definitions[0].epg_subnetmask | int }}"
+        toolserver: "{{ parsed_vm_definitions.epg_definitions[0].epg_toolserver }}"
+        loadbalancer: "{{ parsed_vm_definitions.epg_definitions[0].epg_loadbalancer }}"
+        dhcp: "{{ parsed_vm_definitions.epg_definitions[0].epg_dhcp }}"
+      when: vars.get('vm_definitions', None) is not none
+
     - name: ABORT IF WE DO NOT NEED TO RUN
       ansible.builtin.meta: end_play
       when: vmm_domain != "vmm_hyperv"
