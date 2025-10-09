@@ -140,3 +140,4 @@
 #        style: "device group"
 #        name: "ss-external"
 #        description: "Push from Ansible orchestrator"
+#      when: commit
