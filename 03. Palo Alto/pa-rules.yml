@@ -56,7 +56,7 @@
 #        var: filtered_rules
 
     - name: Create proxy rule if no existing rule is found
-      # If no proxy firewall rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
+      # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
       block:
 
         - name: No rule found
@@ -85,10 +85,14 @@
             category: "uc_{{ source_object.split(' - ')[0] }}"
             action: 'allow'
 
+        - name: Set commit needed to true
+          set_fact:
+            commit: true
+
       when: filtered_rules is not defined or filtered_rules | length == 0
 
     - name: If a proxy rule is found then retrieve URL category and add URL to URL category
-      # If a proxy firewall rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
+      # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
       block:
 
         - name: Initialize list of categories
@@ -115,5 +119,9 @@
             name: "{{ url_categories[0] }}"
             url_value: "{{ request_url }}"
             state: "merged"
-        
+
+        - name: Set commit needed to true
+          set_fact:
+            commit: true
+
       when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
