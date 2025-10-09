@@ -23,6 +23,7 @@
 
   vars:
     source_object: "bd_myapp1_lb02_prd - 10.221.9.240_28"
+    request_url: "www.zero-days.nl/"
     provider:
       ip_address: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
@@ -71,3 +72,9 @@
       fail:
         msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
       when: url_categories | length > 1
+
+    - name: Add URL to retrieved URL category
+      paloaltonetworks.panos.panos_custom_url_category:
+        provider: '{{ provider }}'
+        name: "{{ url_categories }}"
+        url_value: "{{ request_url }}"
