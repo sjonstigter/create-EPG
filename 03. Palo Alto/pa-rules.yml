@@ -123,7 +123,7 @@
 
       when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
 
-    - name: Commit changes by ansible user when commit is needed
+    - name: Commit changes by ansible user when commit is needed + CHECK PUSH!
       paloaltonetworks.panos.panos_commit_panorama:
         provider: "{{ provider }}"
         admins: ['{{ provider.username }}']
