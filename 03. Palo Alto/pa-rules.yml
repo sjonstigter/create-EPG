@@ -30,7 +30,7 @@
 
   tasks:
     - name: Get all security rules from the device
-      panos_security_rule_facts:
+      paloaltonetworks.panos.panos_security_rule_facts:
         provider: "{{ provider }}"
       register: security_rules
 
