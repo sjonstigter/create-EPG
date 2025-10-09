@@ -52,3 +52,7 @@
     - name: Display matching rules
       debug:
         var: filtered_rules
+
+    - name: Display URL category
+      debug:
+        var: filtered_rules.category
