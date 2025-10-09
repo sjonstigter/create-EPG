@@ -132,3 +132,10 @@
         admins: ['{{ provider.username }}']
         description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided
       when: commit
+
+#    - name: Push device group configs
+#      paloaltonetworks.panos.panos_commit_push:
+#        provider: "{{ provider }}"
+#        style: "device group"
+#        name: "ss-external"
+#        description: "Push from Ansible orchestrator"
