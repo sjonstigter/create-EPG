@@ -78,3 +78,4 @@
         provider: '{{ provider }}'
         name: "{{ url_categories[0] }}"
         url_value: "{{ request_url }}"
+        state: "merged"
