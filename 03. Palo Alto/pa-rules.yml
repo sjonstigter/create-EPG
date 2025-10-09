@@ -44,8 +44,8 @@
       set_fact:
         filtered_rules: >-
           {{
-            security_rules.rules | selectattr('source', 'defined') 
-                                 | selectattr('source', 'contains', source_object)
+            security_rules.gathered | selectattr('source_ip', 'defined') 
+                                 | selectattr('source_ip', 'contains', source_object)
                                  | list
           }}
 
