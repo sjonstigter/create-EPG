@@ -24,6 +24,7 @@
   vars:
     source_object: "bd_myapp1_lb02_prd - 10.221.9.240_28"
     request_url: "www.zero-days.nl/"
+    debug: false
     provider:
       ip_address: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
@@ -38,9 +39,10 @@
         gathered_filter: '*'
       register: security_rules
 
-#    - name: DEBUG - Display matching rules
-#      debug:
-#        var: security_rules
+    - name: DEBUG - Display matching rules
+      debug:
+        var: security_rules
+      when: debug
 
     - name: Filter rules with source object "{{ source_object }}"
       set_fact:
@@ -51,9 +53,10 @@
                                  | list
           }}
 
-#    - name: DEBUG - Display matching rules
-#      debug:
-#        var: filtered_rules
+    - name: DEBUG - Display matching rules
+      debug:
+        var: filtered_rules
+      when: debug
 
     - name: Create proxy rule if no existing rule is found
       # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
@@ -107,6 +110,7 @@
         - name: DEBUG - Display all categories
           debug:
             var: url_categories
+          when: debug
 
         - name: Fail if more than one URL category is found
           fail:
