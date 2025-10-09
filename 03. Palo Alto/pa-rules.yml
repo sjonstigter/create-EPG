@@ -55,4 +55,4 @@
 
     - name: Display URL category
       debug:
-        var: filtered_rules.category
+        var: filtered_rules[0].category
