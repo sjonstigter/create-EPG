@@ -62,10 +62,6 @@
       # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
       block:
 
-        - name: No rule found
-          debug:
-            msg: "No FW rule found"
-
         - name: Create a new URL category
           paloaltonetworks.panos.panos_custom_url_category:
             provider: "{{ provider }}"
