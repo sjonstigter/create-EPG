@@ -53,6 +53,7 @@
       debug:
         var: filtered_rules
 
-    - name: Display URL category
+    - name: Display category for each rule
       debug:
-        var: filtered_rules[0].category
+        msg: "Category: {{ item.category }}"
+      loop: "{{ filtered_rules }}"
