@@ -36,9 +36,9 @@
         gathered_filter: '*'
       register: security_rules
 
-    - name: Display matching rules
-      debug:
-        var: security_rules
+#    - name: DEBUG - Display matching rules
+#      debug:
+#        var: security_rules
 
     - name: Filter rules with source object "{{ source_object }}"
       set_fact:
@@ -49,9 +49,9 @@
                                  | list
           }}
 
-    - name: Display matching rules
-      debug:
-        var: filtered_rules
+#    - name: DEBUG - Display matching rules
+#      debug:
+#        var: filtered_rules
 
     - name: Initialize list of categories
       set_fact:
@@ -62,6 +62,6 @@
         url_categories: "{{ url_categories + [item.category | join(', ')] }}"
       loop: "{{ filtered_rules }}"
 
-    - name: Display all categories
+    - name: DEBUG - Display all categories
       debug:
         var: url_categories
