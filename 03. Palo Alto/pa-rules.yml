@@ -53,7 +53,15 @@
       debug:
         var: filtered_rules
 
-    - name: Display category for each rule
-      debug:
-        msg: "Category: {{ item.category }}"
+    - name: Initialize list of categories
+      set_fact:
+        url_categories: []
+
+    - name: Append category to list
+      set_fact:
+        url_categories: "{{ url_categories + [item.category | join(', ')] }}"
       loop: "{{ filtered_rules }}"
+
+    - name: Display all categories
+      debug:
+        var: url_categories
