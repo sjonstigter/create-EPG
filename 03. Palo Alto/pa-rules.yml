@@ -55,27 +55,48 @@
 #      debug:
 #        var: filtered_rules
 
-    - name: Initialize list of categories
-      set_fact:
-        url_categories: []
+    - name: Create proxy rule if no existing rule is found
+      block:
 
-    - name: Append category to list
-      set_fact:
-        url_categories: "{{ url_categories + [item.category | join(', ')] }}"
-      loop: "{{ filtered_rules }}"
+        - name: No rule found
+          debug:
+            msg: "No FW rule found"
 
-    - name: DEBUG - Display all categories
-      debug:
-        var: url_categories
+        - name: Create a new URL category
+          paloaltonetworks.panos.panos_custom_url_category:
+            provider: "{{ provider }}"
+            name: "uc_{{ source_object.split(' - ')[0] }}"
+            url_value: "{{ request_url }}"
+            state: "present"
 
-    - name: Fail if more than one URL category is found
-      fail:
-        msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
-      when: url_categories | length > 1
+      when: filtered_rules is not defined or filtered_rules | length == 0
 
-    - name: Add URL to retrieved URL category
-      paloaltonetworks.panos.panos_custom_url_category:
-        provider: '{{ provider }}'
-        name: "{{ url_categories[0] }}"
-        url_value: "{{ request_url }}"
-        state: "merged"
+    - name: If a proxy rule is found then retrieve URL category and add URL to URL category
+      block:
+
+        - name: Initialize list of categories
+          set_fact:
+            url_categories: []
+
+        - name: Append category to list
+          set_fact:
+            url_categories: "{{ url_categories + [item.category | join(', ')] }}"
+          loop: "{{ filtered_rules }}"
+
+        - name: DEBUG - Display all categories
+          debug:
+            var: url_categories
+
+        - name: Fail if more than one URL category is found
+          fail:
+            msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
+          when: url_categories | length > 1
+
+        - name: Add URL to retrieved URL category
+          paloaltonetworks.panos.panos_custom_url_category:
+            provider: "{{ provider }}"
+            name: "{{ url_categories[0] }}"
+            url_value: "{{ request_url }}"
+            state: "merged"
+        
+      when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
