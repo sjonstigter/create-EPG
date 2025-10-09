@@ -69,6 +69,21 @@
             url_value: "{{ request_url }}"
             state: "present"
 
+        - name: Create proxy rule
+          paloaltonetworks.panos.panos_security_rule:
+            provider: "{{ provider }}"
+            device_group: "ss-external"
+            rule_name: "{{ source_object.split(' - ')[0] }} to web"
+            description: "{{ source_object.split(' - ')[0] }} to web"
+            #tag_name: ['production']
+            source_zone: ['all']
+            source_ip: ['{{ source_object }}']
+            destination_zone: ['all']
+            destination_ip: ['any']
+            service: ['service-https']
+            category: "uc_{{ source_object.split(' - ')[0] }}"
+            action: 'allow'
+
       when: filtered_rules is not defined or filtered_rules | length == 0
 
     - name: If a proxy rule is found then retrieve URL category and add URL to URL category
