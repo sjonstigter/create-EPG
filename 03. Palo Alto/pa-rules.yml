@@ -76,5 +76,5 @@
     - name: Add URL to retrieved URL category
       paloaltonetworks.panos.panos_custom_url_category:
         provider: '{{ provider }}'
-        name: "{{ url_categories }}"
+        name: "{{ url_categories[0] }}"
         url_value: "{{ request_url }}"
