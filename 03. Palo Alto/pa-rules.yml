@@ -66,3 +66,8 @@
     - name: DEBUG - Display all categories
       debug:
         var: url_categories
+
+    - name: Fail if more than one URL category is found
+      fail:
+        msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
+      when: url_categories | length > 1
