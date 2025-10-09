@@ -130,7 +130,7 @@
       paloaltonetworks.panos.panos_commit_panorama:
         provider: "{{ provider }}"
         admins: ['{{ provider.username }}']
-        description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided
+        description: "{{ ticket_num | default('Commit from Ansible orchestrator') }}"  # Optional: leave empty if not provided
       when: commit
 
 #    - name: Push device group configs
