@@ -1,22 +1,19 @@
 ---
 ###########################################################################################################
-# Create Palo Alto firewall object
+# Palo Alto proxy URL access
 ###########################################################################################################
 #
 # This script performs the following steps:
-# - Create Palo Alto network object
+# - Palo Alto proxy URL access
 #
 # Requirements:
 # - ansible>=2.15.0
 # - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
 # - Python module pan-python (pip install pan-python) when using panos_module, else use API
 #
-# Notes:
-# - Set use_panos variable to True to use ansible module instead of API
-#
 ###########################################################################################################
 
-- name: CREATE PALO ALTO OBJECT
+- name: Palo Alto proxy URL access
   hosts: "panorama"
   connection: local
   gather_facts: False
