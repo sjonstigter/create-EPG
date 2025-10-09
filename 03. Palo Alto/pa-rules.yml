@@ -125,3 +125,10 @@
             commit: true
 
       when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
+
+    - name: Commit changes by ansible user when commit is needed
+      paloaltonetworks.panos.panos_commit_panorama:
+        provider: "{{ provider }}"
+        admins: ['{{ provider.username }}']
+        description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided
+      when: commit
