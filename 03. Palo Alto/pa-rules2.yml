@@ -13,10 +13,10 @@
 #
 # This playbook performs the following steps:
 # - Query Panorama if a standard named URL category for the EPG exists (eg uc_bd_application_function)
-#    - Add URL to the standard URL category that is found
+#    - Add URL to the standard named URL category that is found
 #
 # - If no standard named URL category is found then query the security rules for the URL category used
-#   in combination with the source object
+#   in combination with the source_object
 #    - If no security rule is found for source_object then a new URL category and security rule are created
 #    - If a security rule is found for the source_object, extract the used URL category and add URL to it
 # 
