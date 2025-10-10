@@ -48,6 +48,7 @@
       paloaltonetworks.panos.panos_custom_url_category:
         provider: "{{ provider }}"
         state: gathered
+        gathered_filter: '*'
       register: gathered_categories
 
     - name: Check if category '{{ uc_name }}' exists
