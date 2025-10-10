@@ -13,7 +13,7 @@
 #
 # This playbook performs the following steps:
 # - Query Panorama if a standard named URL category for the EPG exists (eg uc_bd_application_function)
-#    - Add URL to the standard named URL category that is found
+#    - Add URL to the standard named URL category if found
 #
 # - If no standard named URL category is found then query the security rules for the URL category used
 #   in combination with the source_object
@@ -143,7 +143,7 @@
 
           when: filtered_rules is not defined or filtered_rules | length == 0
 
-        - name: If a proxy rule is found then retrieve URL category and add URL to URL category
+        - name: If a proxy rule is found then retrieve URL category and add URL to that URL category
           # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
           block:
 
