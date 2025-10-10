@@ -1,0 +1,189 @@
+---
+###########################################################################################################
+# Palo Alto proxy URL access
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Palo Alto proxy URL access
+#
+# Requirements:
+# - ansible>=2.15.0
+# - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
+# - Python module pan-python (pip install pan-python)
+#
+# This playbook performs the following steps:
+# - Query Panorama if a standard named URL category for the EPG exists (eg uc_bd_application_function)
+#    - Add URL to the standard URL category that is found
+#
+# - If no standard named URL category is found then query the security rules for the URL category used
+#   in combination with the source object
+#    - If no security rule is found for source_object then a new URL category and security rule are created
+#    - If a security rule is found for the source_object, extract the used URL category and add URL to it
+# 
+###########################################################################################################
+
+- name: Palo Alto proxy URL access
+  hosts: "panorama"
+  connection: local
+  gather_facts: False
+
+  vars:
+    source_object: "bd_myapp1_lb02_prd - 10.221.9.240_28"
+    request_url: "www.ad.nl/"
+    uc_name: "uc_{{ source_object.split(' - ')[0] }}"
+    # Convert request_url to a list of URLs
+    request_url_list:
+      - example.com
+      - www.example.org
+    perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
+    debug: false # set to true to show extra debug information
+    provider:
+      ip_address: "{{ inventory_hostname }}"
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+
+  tasks:
+    - name: Gather all custom URL categories
+      # Check if we have a standard named URL category list (uc_bd_example)
+      paloaltonetworks.panos.panos_custom_url_category:
+        provider: "{{ provider }}"
+        state: gathered
+      register: gathered_categories
+
+    - name: Check if category '{{ uc_name }}' exists
+      set_fact:
+        url_category_exists: >-
+          {{ uc_name in gathered_categories.gathered | map(attribute='name') | list }}
+
+    - name: Add URL to standard named URL category (MERGED)
+      paloaltonetworks.panos.panos_custom_url_category:
+        provider: "{{ provider }}"
+        name: "{{ uc_name }}"
+        url_value: "{{ request_url }}"
+        state: "merged"
+      when: url_category_exists
+
+    - name: Query security rules for URL category
+      # If no standard named URL category is found, query security rules for URL category
+      block:
+
+        - name: Get all security rules from the device
+          paloaltonetworks.panos.panos_security_rule:
+            provider: "{{ provider }}"
+            device_group: "ss-external"
+            state: 'gathered'
+            gathered_filter: '*'
+          register: security_rules
+
+        - name: DEBUG - Display matching rules
+          debug:
+            var: security_rules
+          when: debug
+
+        - name: Filter rules with source object "{{ source_object }}"
+          set_fact:
+            filtered_rules: >-
+              {{
+                security_rules.gathered | selectattr('source_ip', 'defined') 
+                                    | selectattr('source_ip', 'contains', source_object)
+                                    | list
+              }}
+
+        - name: DEBUG - Display matching rules
+          debug:
+            var: filtered_rules
+          when: debug
+
+      when: not url_category_exists
+
+    - name: Add URL to a new URL category or existing category extracted from security rules
+      block:
+
+        - name: Create proxy rule if no existing rule is found
+          # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
+          block:
+
+            - name: Create a new URL category with requested URL
+              paloaltonetworks.panos.panos_custom_url_category:
+                provider: "{{ provider }}"
+                name: "uc_{{ source_object.split(' - ')[0] }}"
+                url_value: "{{ request_url }}"
+                state: "present"
+
+            - name: Create proxy rule
+              paloaltonetworks.panos.panos_security_rule:
+                provider: "{{ provider }}"
+                device_group: "ss-external"
+                rule_name: "{{ source_object.split(' - ')[0] }} to web"
+                description: "{{ source_object.split(' - ')[0] }} to web"
+                #tag_name: ['production']
+                source_zone: ['all']
+                source_ip: ['{{ source_object }}']
+                destination_zone: ['all']
+                destination_ip: ['any']
+                service: ['service-https']
+                category: "uc_{{ source_object.split(' - ')[0] }}"
+                action: 'allow'
+
+            - name: Set commit needed to true
+              set_fact:
+                commit: true
+              when: perform_commit
+
+          when: filtered_rules is not defined or filtered_rules | length == 0
+
+        - name: If a proxy rule is found then retrieve URL category and add URL to URL category
+          # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
+          block:
+
+            - name: Initialize list of categories
+              set_fact:
+                url_categories: []
+
+            - name: Append category to list
+              set_fact:
+                url_categories: "{{ url_categories + [item.category | join(', ')] }}"
+              loop: "{{ filtered_rules }}"
+
+            - name: DEBUG - Display all categories
+              debug:
+                var: url_categories
+              when: debug
+
+            - name: Fail if more than one URL category is found for our source object
+              fail:
+                msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
+              when: url_categories | length > 1
+
+            - name: Add URL to retrieved URL category using merged state
+              paloaltonetworks.panos.panos_custom_url_category:
+                provider: "{{ provider }}"
+                name: "{{ url_categories[0] }}"
+                url_value: "{{ request_url }}"
+                state: "merged"
+
+            - name: Set commit needed to true
+              set_fact:
+                commit: true
+              when: perform_commit
+
+          when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
+
+      when: not url_category_exists
+
+    - name: Commit changes by ansible user when commit is needed + CHECK PUSH!
+      # Commit changes when commit flag has been set
+      paloaltonetworks.panos.panos_commit_panorama:
+        provider: "{{ provider }}"
+        admins: ['{{ provider.username }}']
+        description: "{{ ticket_num | default('Commit from Ansible orchestrator - Proxy') }}"  # Optional: leave empty if not provided
+      when: commit
+
+#    - name: Push device group configs
+#      paloaltonetworks.panos.panos_commit_push:
+#        provider: "{{ provider }}"
+#        admins: ['{{ provider.username }}']
+#        style: "device group"
+#        name: "ss-external"
+#        description: "Push from Ansible orchestrator - Proxy"
+#      when: commit
