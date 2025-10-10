@@ -9,7 +9,7 @@
 # Requirements:
 # - ansible>=2.15.0
 # - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
-# - Python module pan-python (pip install pan-python) when using panos_module, else use API
+# - Python module pan-python (pip install pan-python)
 #
 ###########################################################################################################
 
@@ -60,7 +60,7 @@
       # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
       block:
 
-        - name: Create a new URL category
+        - name: Create a new URL category with requested URL
           paloaltonetworks.panos.panos_custom_url_category:
             provider: "{{ provider }}"
             name: "uc_{{ source_object.split(' - ')[0] }}"
@@ -107,12 +107,12 @@
             var: url_categories
           when: debug
 
-        - name: Fail if more than one URL category is found
+        - name: Fail if more than one URL category is found for our source object
           fail:
             msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
           when: url_categories | length > 1
 
-        - name: Add URL to retrieved URL category
+        - name: Add URL to retrieved URL category using merged state
           paloaltonetworks.panos.panos_custom_url_category:
             provider: "{{ provider }}"
             name: "{{ url_categories[0] }}"
@@ -127,10 +127,11 @@
       when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
 
     - name: Commit changes by ansible user when commit is needed + CHECK PUSH!
+      # Commit changes when commit flag has been set
       paloaltonetworks.panos.panos_commit_panorama:
         provider: "{{ provider }}"
         admins: ['{{ provider.username }}']
-        description: "{{ ticket_num | default('Commit from Ansible orchestrator') }}"  # Optional: leave empty if not provided
+        description: "{{ ticket_num | default('Commit from Ansible orchestrator - Proxy') }}"  # Optional: leave empty if not provided
       when: commit
 
 #    - name: Push device group configs
@@ -139,5 +140,5 @@
 #        admins: ['{{ provider.username }}']
 #        style: "device group"
 #        name: "ss-external"
-#        description: "Push from Ansible orchestrator"
+#        description: "Push from Ansible orchestrator - Proxy"
 #      when: commit
