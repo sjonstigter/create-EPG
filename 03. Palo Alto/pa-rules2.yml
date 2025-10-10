@@ -33,7 +33,7 @@
 
   vars:
     source_object: "bd_myapp1_lb02_prd - 10.221.9.240_28"
-    request_url: "www.ad.nl/"
+    request_url: "www.example.com/"
     uc_name: "uc_{{ source_object.split(' - ')[0] }}"
     # Convert request_url to a list of URLs
     request_url_list:
