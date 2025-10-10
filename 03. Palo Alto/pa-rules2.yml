@@ -15,11 +15,15 @@
 # - Query Panorama if a standard named URL category for the EPG exists (eg uc_bd_application_function)
 #    - Add URL to the standard named URL category if found
 #
-# - If no standard named URL category is found then query the security rules for the URL category used
-#   in combination with the source_object
+# - If no standard named URL category is found then query the security rules to see if a security rule
+#   exists for our source_object that might use a non-standard named URL category list 
+#   (eg NOT uc_bd_application_function but perhaps uc_application or something else)
+#
 #    - If no security rule is found for source_object then a new URL category and security rule are created
+#      as we can safely assume the service has no proxy access yet
 #    - If a security rule is found for the source_object, extract the used URL category and add URL to it
-# 
+#      Abort if we find more then one URL category on the security rule - Non-deterministic condition!
+#
 ###########################################################################################################
 
 - name: Palo Alto proxy URL access
@@ -75,7 +79,7 @@
       when: url_category_exists
 
     - name: Query security rules for URL category
-      # If no standard named URL category is found, query security rules for URL category
+      # If no standard named URL category is found (not exists), query security rules for URL category
       block:
 
         - name: Get all security rules from the device
@@ -127,7 +131,7 @@
                 device_group: "ss-external"
                 rule_name: "{{ source_object.split(' - ')[0] }} to web"
                 description: "{{ source_object.split(' - ')[0] }} to web"
-                #tag_name: ['production']
+                #tag_name: ['production'] # TODO: See if we can find our application tags
                 source_zone: ['all']
                 source_ip: ['{{ source_object }}']
                 destination_zone: ['all']
@@ -190,7 +194,7 @@
         description: "{{ ticket_num | default('Commit from Ansible orchestrator - Proxy') }}"  # Optional: leave empty if not provided
       when: commit
 
-#    - name: Push device group configs
+#    - name: Push device group configs (TODO only need push if new sec rule created)
 #      paloaltonetworks.panos.panos_commit_push:
 #        provider: "{{ provider }}"
 #        admins: ['{{ provider.username }}']
