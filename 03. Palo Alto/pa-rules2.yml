@@ -20,9 +20,9 @@
 #   (eg NOT uc_bd_application_function but perhaps uc_application or something else)
 #
 #    - If no security rule is found for source_object then a new URL category and security rule are created
-#      as we can safely assume the service has no proxy access yet
+#      as we can safely assume the service has no proxy access yet using standard URL category name
 #    - If a security rule is found for the source_object, extract the used URL category and add URL to it
-#      Abort if we find more then one URL category on the security rule - Non-deterministic condition!
+#      Abort if we find more than one URL category on the security rule - Non-deterministic condition!
 #
 ###########################################################################################################
 
@@ -103,6 +103,7 @@
                                     | selectattr('source_ip', 'contains', source_object)
                                     | list
               }}
+          # TODO: Check doc on source_ip vs source object
 
         - name: DEBUG - Display matching rules
           debug:
