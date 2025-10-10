@@ -61,7 +61,6 @@
           {{ uc_name in gathered_categories.gathered | map(attribute='name') | list }}
 
     - name: Add URL to named URL category and set commit
-      # If no standard named URL category is found, query security rules for URL category
       block:
 
         - name: Add URL to standard named URL category (MERGED)
