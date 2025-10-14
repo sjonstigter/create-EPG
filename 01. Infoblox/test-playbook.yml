@@ -1,4 +1,14 @@
 ---
+###########################################################################
+# Test playbook for infoblox-client debug
+#
+# This playbook runs through some standard Infoblox-client commands, like:
+#
+# - nios_lookup
+# - nios_next_network
+# - nios_network (one that should give error)
+#
+###########################################################################
 - hosts: nios
   connection: local
   name: ALLOCATE INFOBLOX SUBNET
@@ -15,6 +25,7 @@
 
   tasks:
     - name: Lookup function - nios_lookup function
+      # Perform nios_lookup function on Infoblox network container
       set_fact:
         network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application }, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
@@ -23,10 +34,12 @@
         var: network_container_result
 
     - name: Lookup function - nios_next_network function
+      # Perform nios_next_network to obtain next available /29 network from retrieved network container
       set_fact:
         networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', network_container_result[0].network, cidr=29, provider=nios_provider) }}"
 
     - name: Create new network - nios_network function
+      # Create new network through nios_network function with /29 network retrieved from nios_next_network
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
         comment: "{{ bd_name }}"
