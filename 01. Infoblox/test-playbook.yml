@@ -20,7 +20,7 @@
 
     - name: Lookup function - nios_next_network function
       set_fact:
-        networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', network_container_result, cidr=29, provider=nios_provider) }}"
+        networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', network_container_result.network, cidr=29, provider=nios_provider) }}"
 
     - name: Create new network - nios_network function
       infoblox.nios_modules.nios_network:
