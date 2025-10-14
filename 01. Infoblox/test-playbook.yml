@@ -30,7 +30,7 @@
       infoblox.nios_modules.nios_network:
         network: "{{ networkaddr[0] }}"
         comment: "{{ bd_name }}"
-        template: "network_29"
+        template: "network29"
         state: present
         provider: "{{ nios_provider }}"
 
