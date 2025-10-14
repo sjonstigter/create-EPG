@@ -1,0 +1,32 @@
+---
+- hosts: nios
+  connection: local
+  name: ALLOCATE INFOBLOX SUBNET
+
+  vars:
+    nios_provider:
+      host: "{{ inventory_hostname }}"
+      username: "{{ lookup('env', 'ANSIBLE_NET_USERNAME') }}"
+      password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
+      ssl_verify: false
+    application: "mytestapp"
+    random_number: "{{ 1000 | random(start=1) }}"
+    bd_name: "bd_{{ application }}_{{ random_number }}"
+
+  tasks:
+    - name: Lookup function - nios_lookup function
+      set_fact:
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application }, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+    - name: Lookup function - nios_next_network function
+      set_fact:
+        networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', network_container_result, cidr=29, provider=nios_provider) }}"
+
+    - name: Create new network - nios_network function
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        comment: "{{ bd_name }}"
+        template: "network_29"
+        state: present
+        provider: "{{ nios_provider }}"
+
