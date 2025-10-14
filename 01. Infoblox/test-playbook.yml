@@ -18,7 +18,7 @@
       set_fact:
         network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application }, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
-    - name: DEBUG APPLICATION NETWORK CONTAINER RESULT AFTER CREATION
+    - name: Debug - Show network container result
       debug:
         var: network_container_result
 
@@ -34,3 +34,6 @@
         state: present
         provider: "{{ nios_provider }}"
 
+    - name: Debug - Show created Infoblox network
+      debug:
+        msg: "Created network: {{ bd_name }} with IP subnet {{ networkaddr[0] }} on {{ inventory_hostname }}" 
