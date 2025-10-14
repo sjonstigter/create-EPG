@@ -18,6 +18,10 @@
       set_fact:
         network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application }, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
 
+    - name: DEBUG APPLICATION NETWORK CONTAINER RESULT AFTER CREATION
+      debug:
+        var: network_container_result
+
     - name: Lookup function - nios_next_network function
       set_fact:
         networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', network_container_result.network, cidr=29, provider=nios_provider) }}"
