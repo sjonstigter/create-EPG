@@ -17,11 +17,11 @@
 
     pa_url_pattern: >-
       ^(
-        \^?                                  # optional caret (^)
-        (\*\.)?                               # optional wildcard prefix (*.domain)
-        [A-Za-z0-9.-]+                        # domain part
-        (/[A-Za-z0-9._~%!$&'()*+,;=:@/-]*)?  # optional path
-        (\*)?                                  # optional trailing wildcard
+        \^?                    # optional caret (^)
+        (\*\.)?                 # optional wildcard prefix (*.domain)
+        [A-Za-z0-9.-]+          # domain part
+        (/[A-Za-z0-9._~%!$&'()\*+,;=:@/-]*)?  # optional path (escaped *)
+        (\*)?                   # optional trailing wildcard
       )$
 
   tasks:
