@@ -44,6 +44,7 @@
       block:
 
         - name: Create DNS txt record - nios_text_record function that does NOT use six
+          # https://github.com/infobloxopen/infoblox-ansible/blob/master/plugins/modules/nios_host_record.py
           infoblox.nios_modules.nios_txt_record:
             name: text{{ random_number }}.zero-days.nl
             text: mytext
@@ -51,6 +52,7 @@
             provider: "{{ nios_provider }}"
 
         - name: Create DNS host - nios_host_record function to uses six
+          # https://github.com/infobloxopen/infoblox-ansible/blob/master/plugins/modules/nios_txt_record.py
           infoblox.nios_modules.nios_host_record:
             name: "host{{ random_number }}.zero-days.nl"
             ipv4:
