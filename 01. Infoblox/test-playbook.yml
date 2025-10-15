@@ -69,5 +69,6 @@
             name: text{{ random_number }}.record.com
             text: mytext
             state: present
+            provider: "{{ nios_provider }}"
 
       when: bonus_code
