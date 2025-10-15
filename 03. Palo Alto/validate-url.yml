@@ -1,10 +1,11 @@
+---
 - name: Validate Palo Alto EDL URL list entries (fail on invalid)
   hosts: localhost
   gather_facts: false
 
   vars:
     # Example input URL list
-    request_url_list:
+    url_entries:
       - "^paloaltonetworks.com"
       - "*.example.com/*"
       - "example.org/path"
@@ -16,12 +17,13 @@
       - "192.168.1.1"                 # invalid: IP address
 
   tasks:
-    - name: Validate Palo Alto EDL URL list entries - Initialize lists
+
+    - name: Initialize URL tracking variables
       set_fact:
         valid_urls: []
         invalid_urls: []
 
-    - name: Validate Palo Alto EDL URL list entries - Validate each URL entry
+    - name: Validate URLs according to Palo Alto EDL rules
       vars:
         pa_url_pattern: >-
           ^(
@@ -31,18 +33,16 @@
             (?:/[A-Za-z0-9._~%!$&'()*+,;=:@/-]*)? # optional path (no ? or #)
             (?:\*)?                              # optional trailing wildcard
           )$
-      loop: "{{ request_url_list }}"
-      loop_control:
-        label: "{{ item }}"
+      with_items: "{{ url_entries }}"
       vars:
         is_valid_url: >-
-          {{ 
+          {{
             (item is match(pa_url_pattern))
             and not (item is search('http|\\?|#|\\s'))
             and not (item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$'))
           }}
-      block:
-        - name: Add valid URLs
+      tasks:
+        - name: Add valid URLs to list
           set_fact:
             valid_urls: "{{ valid_urls + [ item ] }}"
           when: is_valid_url
@@ -52,7 +52,7 @@
             invalid_urls: "{{ invalid_urls + [ item ] }}"
           when: not is_valid_url
 
-    - name: Validate Palo Alto EDL URL list entries - Fail if any invalid URLs are found
+    - name: Fail if any invalid URLs are found
       fail:
         msg: |
           Invalid Palo Alto EDL URLs found:
