@@ -1,4 +1,3 @@
----
 - name: Validate Palo Alto EDL URL list entries (fail on invalid)
   hosts: localhost
   gather_facts: false
@@ -15,38 +14,32 @@
       - "^.badformat.com"
       - "192.168.1.1"
 
-    pa_url_pattern: >-
-      ^(
-        \^?                    # optional caret (^)
-        (\*\.)?                 # optional wildcard prefix (*.domain)
-        [A-Za-z0-9.-]+          # domain part
-        (/[A-Za-z0-9._~%!$&'()\*+,;=:@/-]*)?  # optional path (escaped *)
-        (\*)?                   # optional trailing wildcard
-      )$
-
   tasks:
 
-    - name: Initialize valid and invalid URL lists
+    - name: Initialize lists
       set_fact:
         valid_urls: []
         invalid_urls: []
 
-    - name: Categorize URLs into valid and invalid
+    - name: Categorize URLs
+      vars:
+        starts_with_http: "{{ item.startswith('http://') or item.startswith('https://') }}"
+        has_invalid_chars: "{{ '?' in item or '#' in item or ' ' in item }}"
+        is_ip: "{{ item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$') is not none }}"
+        caret_ok: "{{ (item.startswith('^') and not item.startswith('^.')) or not item.startswith('^') }}"
+      set_fact:
+        valid_urls: "{{ valid_urls + [item] }}"
+        invalid_urls: "{{ invalid_urls + [item] }}"
       loop: "{{ url_entries }}"
       loop_control:
         label: "{{ item }}"
-      vars:
-        is_valid_url: >-
-          {{
-            (item is match(pa_url_pattern))
-            and not (item is search('http|\\?|#|\\s'))
-            and not (item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$'))
-          }}
-      set_fact:
-        valid_urls: "{{ valid_urls + [item] if is_valid_url else valid_urls }}"
-        invalid_urls: "{{ invalid_urls + [item] if not is_valid_url else invalid_urls }}"
+      when: not (starts_with_http or has_invalid_chars or is_ip or not caret_ok)
 
-    - name: Fail if any invalid URLs exist
+    - name: Collect invalid URLs
+      set_fact:
+        invalid_urls: "{{ url_entries | difference(valid_urls) }}"
+
+    - name: Fail if invalid URLs exist
       fail:
         msg: |
           Invalid Palo Alto EDL URLs found:
