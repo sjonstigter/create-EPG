@@ -108,7 +108,7 @@
           paloaltonetworks.panos.panos_custom_url_category:
             provider: "{{ provider }}"
             name: "{{ uc_name }}"
-            url_value: "{{ request_url }}"
+            url_value: "{{ request_url_list }}"
             state: "merged"
 
         - name: Set commit needed to true
@@ -163,7 +163,7 @@
               paloaltonetworks.panos.panos_custom_url_category:
                 provider: "{{ provider }}"
                 name: "{{ uc_name }}"
-                url_value: "{{ request_url }}"
+                url_value: "{{ request_url_list }}"
                 state: "present"
 
             - name: Create proxy rule
@@ -215,7 +215,7 @@
               paloaltonetworks.panos.panos_custom_url_category:
                 provider: "{{ provider }}"
                 name: "{{ url_categories[0] }}"
-                url_value: "{{ request_url }}"
+                url_value: "{{ request_url_list }}"
                 state: "merged"
 
             - name: Set commit needed to true
