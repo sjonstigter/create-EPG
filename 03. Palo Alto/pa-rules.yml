@@ -25,6 +25,7 @@
     request_url_list:
       - example.com
       - www.example.org
+    validate_url: true
     perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
     debug: false # set to true to show extra debug information
     provider:
@@ -33,6 +34,46 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
+    - name: Validate Palo Alto EDL URL list entries
+      block:
+
+        - name: Validate Palo Alto EDL URL list entries - Initialize lists
+          set_fact:
+            valid_urls: []
+            invalid_urls: []
+
+        - name: Validate Palo Alto EDL URL list entries - Categorize URLs
+          vars:
+            # Checks to run against URL
+            starts_with_http: "{{ item.startswith('http://') or item.startswith('https://') }}"
+            has_invalid_chars: "{{ '?' in item or '#' in item or ' ' in item }}"
+            is_ip: "{{ item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$') is not none }}"
+            caret_ok: "{{ (item.startswith('^') and not item.startswith('^.')) or not item.startswith('^') }}"
+          set_fact:
+            valid_urls: "{{ valid_urls + [item] }}"
+            invalid_urls: "{{ invalid_urls + [item] }}"
+          loop: "{{ request_url_list }}"
+          loop_control:
+            label: "{{ item }}"
+          when: not (starts_with_http or has_invalid_chars or is_ip or not caret_ok)
+
+        - name: Validate Palo Alto EDL URL list entries - Collect invalid URLs
+          set_fact:
+            invalid_urls: "{{ request_url_list | difference(valid_urls) }}"
+
+        - name: Validate Palo Alto EDL URL list entries - Fail if invalid URLs exist
+          fail:
+            msg: |
+              Invalid Palo Alto EDL URLs found:
+              {{ invalid_urls | to_nice_yaml }}
+          when: invalid_urls | length > 0
+
+        - name: Validate Palo Alto EDL URL list entries - Show valid URLs
+          debug:
+            msg: "Valid URLs: {{ valid_urls }}"
+
+      when: validate_url
+
     - name: Get all security rules from the device
       paloaltonetworks.panos.panos_security_rule:
         provider: "{{ provider }}"
