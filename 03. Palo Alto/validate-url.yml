@@ -17,11 +17,11 @@
 
     pa_url_pattern: >-
       ^(
-        \^?                               # optional caret (^)
-        (\*\.)?                            # optional wildcard prefix (*.domain)
-        [A-Za-z0-9.-]+                     # domain
+        \^?                                 # optional caret (^)
+        (\*\.)?                              # optional wildcard prefix (*.domain)
+        [A-Za-z0-9.-]+                       # domain part
         (/[A-Za-z0-9._~%!$&'()*+,;=:@/-]*)? # optional path
-        (\*)?                               # optional trailing wildcard
+        (\*)?                                 # optional trailing wildcard
       )$
 
   tasks:
@@ -31,10 +31,7 @@
         valid_urls: []
         invalid_urls: []
 
-    - name: Validate each URL
-      loop: "{{ url_entries }}"
-      loop_control:
-        label: "{{ item }}"
+    - name: Validate and categorize each URL
       vars:
         is_valid_url: >-
           {{
@@ -42,6 +39,9 @@
             and not (item is search('http|\\?|#|\\s'))
             and not (item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$'))
           }}
+      loop: "{{ url_entries }}"
+      loop_control:
+        label: "{{ item }}"
       block:
         - name: Append to valid_urls
           set_fact:
