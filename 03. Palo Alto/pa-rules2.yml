@@ -70,7 +70,7 @@
           loop: "{{ request_url_list }}"
           loop_control:
             label: "{{ item }}"
-          when: not (starts_with_http or has_invalid_chars or is_ip or not caret_ok)
+          when: not (starts_with_http or is_ip or not caret_ok)
 
         - name: Validate Palo Alto URL list entries - Collect invalid URLs
           set_fact:
