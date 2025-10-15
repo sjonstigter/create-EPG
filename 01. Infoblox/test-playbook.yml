@@ -39,6 +39,27 @@
       set_fact:
         networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', network_container_result[0].network, cidr=29, provider=nios_provider) }}"
 
+    - name: Bonus code
+      # Runs bonus testing code attempting six ansible/python dependency - Tests problem with six dependency
+      block:
+
+        - name: Create DNS txt record - nios_text_record function that does NOT use six
+          infoblox.nios_modules.nios_txt_record:
+            name: text{{ random_number }}.zero-days.nl
+            text: mytext
+            state: present
+            provider: "{{ nios_provider }}"
+
+        - name: Create DNS host - nios_host_record function to uses six
+          infoblox.nios_modules.nios_host_record:
+            name: "host{{ random_number }}.zero-days.nl"
+            ipv4:
+              - address: 192.168.10.1
+            state: present
+            provider: "{{ nios_provider }}"
+
+      when: bonus_code
+
     - name: Create new network - nios_network function
       # Create new network through nios_network function with /29 network retrieved from nios_next_network
       infoblox.nios_modules.nios_network:
@@ -51,24 +72,3 @@
     - name: Debug - Show created Infoblox network
       debug:
         msg: "Created network: {{ bd_name }} with IP subnet {{ networkaddr[0] }} on {{ inventory_hostname }}" 
-
-    - name: Bonus code
-      # Runs bonus testing code attempting six ansible/python dependency - Tests problem with six dependency
-      block:
-
-        - name: Create DNS host - nios_host_record function to uses six
-          infoblox.nios_modules.nios_host_record:
-            name: "host{{ random_number }}.zero-days.nl"
-            ipv4:
-              - address: 192.168.10.1
-            state: present
-            provider: "{{ nios_provider }}"
-
-        - name: Create DNS txt record - nios_text_record function that does NOT use six
-          infoblox.nios_modules.nios_txt_record:
-            name: text{{ random_number }}.zero-days.nl
-            text: mytext
-            state: present
-            provider: "{{ nios_provider }}"
-
-      when: bonus_code
