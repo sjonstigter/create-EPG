@@ -1,0 +1,64 @@
+- name: Validate Palo Alto EDL URL list entries (fail on invalid)
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    # Example input URL list
+    request_url_list:
+      - "^paloaltonetworks.com"
+      - "*.example.com/*"
+      - "example.org/path"
+      - "www.site.com/subdir/page"
+      - "http://bad.example.com"      # invalid: protocol
+      - "example.com?query=1"         # invalid: query
+      - "example.com#frag"            # invalid: fragment
+      - "^.badformat.com"             # invalid: caret position
+      - "192.168.1.1"                 # invalid: IP address
+
+  tasks:
+    - name: Validate Palo Alto EDL URL list entries - Initialize lists
+      set_fact:
+        valid_urls: []
+        invalid_urls: []
+
+    - name: Validate Palo Alto EDL URL list entries - Validate each URL entry
+      vars:
+        pa_url_pattern: >-
+          ^(
+            \^?                                  # optional exact match (^)
+            (?:\*\.)?                            # optional wildcard prefix (*.domain)
+            [A-Za-z0-9.-]+                       # domain part
+            (?:/[A-Za-z0-9._~%!$&'()*+,;=:@/-]*)? # optional path (no ? or #)
+            (?:\*)?                              # optional trailing wildcard
+          )$
+      loop: "{{ request_url_list }}"
+      loop_control:
+        label: "{{ item }}"
+      vars:
+        is_valid_url: >-
+          {{ 
+            (item is match(pa_url_pattern))
+            and not (item is search('http|\\?|#|\\s'))
+            and not (item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$'))
+          }}
+      block:
+        - name: Add valid URLs
+          set_fact:
+            valid_urls: "{{ valid_urls + [ item ] }}"
+          when: is_valid_url
+
+        - name: Track invalid URLs
+          set_fact:
+            invalid_urls: "{{ invalid_urls + [ item ] }}"
+          when: not is_valid_url
+
+    - name: Validate Palo Alto EDL URL list entries - Fail if any invalid URLs are found
+      fail:
+        msg: |
+          Invalid Palo Alto EDL URLs found:
+          {{ invalid_urls | to_nice_yaml }}
+      when: invalid_urls | length > 0
+
+    - name: Display valid URL list
+      debug:
+        msg: "Valid Palo Alto URLs: {{ valid_urls }}"
