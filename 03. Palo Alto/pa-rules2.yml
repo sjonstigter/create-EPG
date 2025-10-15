@@ -12,6 +12,8 @@
 # - Python module pan-python (pip install pan-python)
 #
 # This playbook performs the following steps:
+# - Validate if entered URL's are valid Palo Alto URL format
+#
 # - Query Panorama if a standard named URL category for the EPG exists (eg uc_bd_application_function)
 #    - Add URL to the standard named URL category if found
 #
@@ -48,15 +50,15 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
-    - name: Validate Palo Alto EDL URL list entries
+    - name: Validate Palo Alto URL list entries
       block:
 
-        - name: Validate Palo Alto EDL URL list entries - Initialize lists
+        - name: Validate Palo Alto URL list entries - Initialize lists
           set_fact:
             valid_urls: []
             invalid_urls: []
 
-        - name: Validate Palo Alto EDL URL list entries - Categorize URLs
+        - name: Validate Palo Alto URL list entries - Categorize URLs
           vars:
             # Checks to run against URL
             starts_with_http: "{{ item.startswith('http://') or item.startswith('https://') }}"
@@ -71,18 +73,18 @@
             label: "{{ item }}"
           when: not (starts_with_http or has_invalid_chars or is_ip or not caret_ok)
 
-        - name: Validate Palo Alto EDL URL list entries - Collect invalid URLs
+        - name: Validate Palo Alto URL list entries - Collect invalid URLs
           set_fact:
             invalid_urls: "{{ request_url_list | difference(valid_urls) }}"
 
-        - name: Validate Palo Alto EDL URL list entries - Fail if invalid URLs exist
+        - name: Validate Palo Alto URL list entries - Fail if invalid URLs exist
           fail:
             msg: |
-              Invalid Palo Alto EDL URLs found:
+              Invalid Palo Alto URLs found:
               {{ invalid_urls | to_nice_yaml }}
           when: invalid_urls | length > 0
 
-        - name: Validate Palo Alto EDL URL list entries - Show valid URLs
+        - name: Validate Palo Alto URL list entries - Show valid URLs
           debug:
             msg: "Valid URLs: {{ valid_urls }}"
 
