@@ -49,6 +49,7 @@
 
   tasks:
     - name: Validate Palo Alto URL list entries
+      # This function checks if the URL's provided in the request_url_list URL list are valid Palo Alto accepted URL's
       block:
 
         - name: Validate Palo Alto URL list entries - Initialize lists
@@ -58,7 +59,7 @@
 
         - name: Validate Palo Alto URL list entries - Categorize URLs
           vars:
-            # Checks to run against URL
+            # Checks to run against URL while looping through request_url_list
             starts_with_http: "{{ item.startswith('http://') or item.startswith('https://') }}" # URL cannot begin with protocol like http(s)
             has_invalid_chars: "{{ '?' in item or '#' in item or ' ' in item }}" # URL has invalid characters
             is_ip: "{{ item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$') is not none }}" # URL is an IP address
