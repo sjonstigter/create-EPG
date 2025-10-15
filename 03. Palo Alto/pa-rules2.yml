@@ -168,6 +168,8 @@
                 url_value: "{{ request_url_list }}"
                 state: "present"
 
+            # TODO: Add URL category to URL Filtering profile strict-proxy-bp - No native ansible option/module? Check through pan_op 
+
             - name: Create proxy rule
               paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
