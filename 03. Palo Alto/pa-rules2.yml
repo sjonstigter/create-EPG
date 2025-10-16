@@ -89,6 +89,19 @@
 
       when: validate_url
 
+    - name: Handle Palo Alto field limit - Set original uc_name before truncation
+      set_fact:
+        original_uc_name: "{{ 'uc_' + source_object.split(' - ')[0] }}"
+
+    - name: Handle Palo Alto field limit - Truncate uc_name to max 31 characters
+      set_fact:
+        uc_name: "{{ original_uc_name[:31] }}"
+
+    - name: Handle Palo Alto field limit - Warn if uc_name was truncated
+      debug:
+        msg: "WARNING: uc_name was truncated from {{ original_uc_name }} to {{ uc_name }}"
+      when: original_uc_name | length > 31
+
     - name: Gather all custom URL categories
       # Check if we have a standard named URL category list (uc_bd_example)
       paloaltonetworks.panos.panos_custom_url_category:
