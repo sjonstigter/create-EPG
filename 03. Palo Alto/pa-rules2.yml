@@ -85,7 +85,9 @@
 
         - name: Validate Palo Alto URL list entries - Show valid URLs
           debug:
-            msg: "Valid URLs: {{ valid_urls }}"
+            msg: |
+              Valid Palo Alto URLs: 
+              {{ valid_urls | to_nice_yaml }}
 
       when: validate_url
 
