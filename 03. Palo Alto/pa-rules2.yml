@@ -117,7 +117,7 @@
 
     - name: Handle Palo Alto field limit - Set original uc_name before truncation
       set_fact:
-        original_uc_name: "{{ 'uc_' + source_object.split(' - ')[0] }}"
+        original_uc_name: "{{ 'uc_' + source_object[0].split(' - ')[0] }}"
 
     - name: Handle Palo Alto field limit - Truncate uc_name to max 31 characters
       set_fact:
@@ -212,8 +212,8 @@
               paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
                 device_group: "ss-external"
-                rule_name: "{{ source_object.split(' - ')[0] }} to web"
-                description: "{{ source_object.split(' - ')[0] }} to web"
+                rule_name: "{{ source_object[0].split(' - ')[0] }} to web"
+                description: "{{ source_object[0].split(' - ')[0] }} to web"
                 #tag_name: ['production'] # TODO: See if we can find our application tags
                 source_zone: ['all']
                 source_ip: ['{{ source_object }}']
