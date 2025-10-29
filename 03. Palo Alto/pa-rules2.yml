@@ -106,7 +106,10 @@
     - name: Find firewall object based on input variable - List result
       debug:
         msg: >-
-          {{ source_object in gathered_objects.gathered | map(attribute='name') | list }}
+          {{ gathered_objects.gathered
+            | selectattr('name', 'search', source_object)
+            | map(attribute='name')
+            | list }}
 
     - name: Handle Palo Alto field limit - Set original uc_name before truncation
       set_fact:
