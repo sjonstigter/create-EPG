@@ -100,12 +100,13 @@
       paloaltonetworks.panos.panos_address_object:
         provider: "{{ provider }}"
         state: 'gathered'
-        gathered_filter: "name contains {{ fw_object_name }}"
-      register: object_result
+        gathered_filter: '*'
+      register: gathered_objects
 
     - name: Find firewall object based on input variable - List result
       debug:
-        msg: "{{ object_result.gathered | map(attribute='name') | list }}"
+        msg: >-
+          {{ source_object in gathered_objects.gathered | map(attribute='name') | list }}
 
     - name: Handle Palo Alto field limit - Set original uc_name before truncation
       set_fact:
