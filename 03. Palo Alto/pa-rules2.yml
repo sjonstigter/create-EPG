@@ -95,14 +95,14 @@
         fw_object_name: >-
           {{ epg_name | regex_replace('^(bd_|epg_)', '') }}
 
-    - name: Find firewall object based on input variable - Find address object 2
+    - name: Find firewall object based on input variable - Find address object
       paloaltonetworks.panos.panos_address_object:
         provider: "{{ provider }}"
         state: 'gathered'
         gathered_filter: '*'
       register: gathered_objects
 
-    - name: Find firewall object based on input variable - List result
+    - name: Find firewall object based on input variable - Set object
       set_fact:
         source_object: >-
           {{ gathered_objects.gathered
