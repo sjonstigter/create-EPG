@@ -113,7 +113,7 @@
 
     - name: Set URL Category name
       set_fact: 
-        uc_name: "uc_{{ source_object.split(' - ')[0] }}"
+        uc_name: "uc_{{ source_object[0].split(' - ')[0] }}"
 
     - name: Handle Palo Alto field limit - Set original uc_name before truncation
       set_fact:
