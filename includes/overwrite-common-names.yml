@@ -58,7 +58,6 @@
     application_lookup: >-
       {{ application }}_{{ 
         (function[:4] if 'lvnl' in function else
-         function[:4] if 'cert' in function else
          function[:2] if 'dt' in function else
          function[:3])
       }}
