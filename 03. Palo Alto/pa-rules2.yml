@@ -91,6 +91,22 @@
 
       when: validate_url
 
+    - name: Find firewall object based on input variable - Strip name
+      set_fact:
+        fw_object_name: >-
+          {{ source_object | regex_replace('^(bd_|epg_)', '') }}
+
+    - name: Find firewall object based on input variable - Find address object
+      paloaltonetworks.panos.panos_object_facts:
+        provider: '{{ provider }}'
+        name_regex: '.*{{ fw_object_name }}.*'
+        object_type: 'address'
+      register: object_result
+
+    - name: Find firewall object based on input variable - List result
+      debug:
+        msg: '{{ object_result }}'
+
     - name: Handle Palo Alto field limit - Set original uc_name before truncation
       set_fact:
         original_uc_name: "{{ 'uc_' + source_object.split(' - ')[0] }}"
