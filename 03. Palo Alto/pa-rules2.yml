@@ -107,7 +107,7 @@
       set_fact:
         source_object: >-
           {{ gathered_objects.gathered
-            | selectattr('name', 'search', epg_name)
+            | selectattr('name', 'search', fw_object_name)
             | map(attribute='name')
             | list }}
 
