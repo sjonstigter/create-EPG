@@ -106,9 +106,8 @@
     - name: Find firewall object based on input variable - Find address object 2
       paloaltonetworks.panos.panos_address_object:
         provider: "{{ provider }}"
-        device_group: "ss-external"
         state: 'gathered'
-        gathered_filter: '.*{{ fw_object_name }}.*'
+        gathered_filter: "{{ fw_object_name }}"
       register: object_result
 
     - name: Find firewall object based on input variable - List result
