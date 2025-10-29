@@ -34,8 +34,7 @@
   gather_facts: False
 
   vars:
-    source_object: "bd_myapp1_lb02_prd - 10.221.9.240_28"
-    uc_name: "uc_{{ source_object.split(' - ')[0] }}"
+    epg_name: "epg_myapp1_lb02_prd"
     request_url_list:
       - example.com
       - www.example.org
@@ -94,7 +93,7 @@
     - name: Find firewall object based on input variable - Strip name
       set_fact:
         fw_object_name: >-
-          {{ source_object | regex_replace('^(bd_|epg_)', '') }}
+          {{ epg_name | regex_replace('^(bd_|epg_)', '') }}
 
     - name: Find firewall object based on input variable - Find address object 2
       paloaltonetworks.panos.panos_address_object:
@@ -104,12 +103,16 @@
       register: gathered_objects
 
     - name: Find firewall object based on input variable - List result
-      debug:
-        msg: >-
+      set_fact:
+        source_object: >-
           {{ gathered_objects.gathered
-            | selectattr('name', 'search', source_object)
+            | selectattr('name', 'search', epg_name)
             | map(attribute='name')
             | list }}
+
+    - name: Set URL Category name
+      set_fact: 
+        uc_name: "uc_{{ source_object.split(' - ')[0] }}"
 
     - name: Handle Palo Alto field limit - Set original uc_name before truncation
       set_fact:
