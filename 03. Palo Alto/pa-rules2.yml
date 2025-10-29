@@ -34,10 +34,6 @@
   gather_facts: False
 
   vars:
-    epg_name: "epg_myapp1_lb02_prd"
-    request_url_list:
-      - example.com
-      - www.example.org
     validate_url: true # set to true to validate if URL's are according to Palo Alto required format
     perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
     debug: false # set to true to show extra debug information
@@ -47,6 +43,11 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
+    - name: Convert input URL list string to list if needed
+      set_fact:
+        request_url_list: "{{ url_list | from_yaml }}"
+      when: url_list is string
+
     - name: Validate Palo Alto URL list entries
       # This function checks if the URL's provided in the request_url_list URL list are valid Palo Alto accepted URL's
       block:
