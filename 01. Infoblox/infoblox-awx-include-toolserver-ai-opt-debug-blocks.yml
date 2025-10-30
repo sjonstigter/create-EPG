@@ -50,12 +50,12 @@
 
     - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW
       set_fact:
-        tenant: "{{ parsed_vm_definitions.epg_definitions[0].epg_tenant }}"
-        application: "{{ parsed_vm_definitions.epg_definitions[0].epg_application }}"
+        tenant: "{{ parsed_vm_definitions.epg_definitions[0].epg_tenant | lower }}"
+        application: "{{ parsed_vm_definitions.epg_definitions[0].epg_application | lower }}"
         function: "{{ parsed_vm_definitions.epg_definitions[0].epg_function | default('') }}"
-        cust_environment: "{{ parsed_vm_definitions.epg_definitions[0].epg_envtype }}"
-        os: "{{ parsed_vm_definitions.epg_definitions[0].epg_os }}"
-        vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain }}"
+        cust_environment: "{{ parsed_vm_definitions.epg_definitions[0].epg_envtype | lower }}"
+        os: "{{ parsed_vm_definitions.epg_definitions[0].epg_os | lower }}"
+        vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain | lower }}"
         subnetmask: "{{ parsed_vm_definitions.epg_definitions[0].epg_subnetmask | int }}"
         toolserver: "{{ parsed_vm_definitions.epg_definitions[0].epg_toolserver }}"
         loadbalancer: "{{ parsed_vm_definitions.epg_definitions[0].epg_loadbalancer }}"
