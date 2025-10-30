@@ -281,3 +281,9 @@
           anp: "{{ anp_name }}"
           epg: "{{ epg_name }}"
           vmnetwork: "[{{ tenant }}][{{ anp_name }}][{{ epg_name }}]"
+
+    - name: SET STAT THE VM_DEFINITIONS TO RETURN TO SDIW
+      ansible.builtin.set_stats:
+        data:
+          vm_definitions: "{{ vm_definitions }}"
+      when: vars.get('vm_definitions', None) is not none
