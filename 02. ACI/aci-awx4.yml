@@ -37,14 +37,14 @@
         parsed_vm_definitions: "{{ vm_definitions | from_yaml }}"
       when: vars.get('vm_definitions', None) is not none
 
-    - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW
+    - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW with lower
       set_fact:
         tenant: "{{ parsed_vm_definitions.epg_definitions[0].epg_tenant }}"
         application: "{{ parsed_vm_definitions.epg_definitions[0].epg_application }}"
         function: "{{ parsed_vm_definitions.epg_definitions[0].epg_function | default('') }}"
         cust_environment: "{{ parsed_vm_definitions.epg_definitions[0].epg_envtype }}"
         os: "{{ parsed_vm_definitions.epg_definitions[0].epg_os }}"
-        vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain }}"
+        vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain | lower }}"
         subnetmask: "{{ parsed_vm_definitions.epg_definitions[0].epg_subnetmask | int }}"
         toolserver: "{{ parsed_vm_definitions.epg_definitions[0].epg_toolserver }}"
         loadbalancer: "{{ parsed_vm_definitions.epg_definitions[0].epg_loadbalancer }}"
