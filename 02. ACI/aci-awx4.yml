@@ -32,26 +32,12 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
-    - name: LOAD SDIW VM_DEFINITIONS YAML STRING INTO DICTIONNARY
+    - name: LOAD SDIW EPG_DEFINITIONS YAML STRING INTO DICTIONNARY
       set_fact:
         parsed_epg_definitions: "{{ epg_definitions | from_yaml }}"
       when: vars.get('epg_definitions', None) is not none
 
-#    - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW
-#      set_fact:
-#        tenant: "{{ parsed_vm_definitions.epg_definitions[0].epg_tenant | lower }}"
-#        application: "{{ parsed_vm_definitions.epg_definitions[0].epg_application | lower }}"
-#        function: "{{ parsed_vm_definitions.epg_definitions[0].epg_function | default('') | lower }}"
-#        cust_environment: "{{ parsed_vm_definitions.epg_definitions[0].epg_envtype | lower }}"
-#        os: "{{ parsed_vm_definitions.epg_definitions[0].epg_os | lower }}"
-#        vmm_domain: "{{ parsed_vm_definitions.epg_definitions[0].epg_vmm_domain | lower }}"
-#        subnetmask: "{{ parsed_vm_definitions.epg_definitions[0].epg_subnetmask | int }}"
-#        toolserver: "{{ parsed_vm_definitions.epg_definitions[0].epg_toolserver }}"
-#        loadbalancer: "{{ parsed_vm_definitions.epg_definitions[0].epg_loadbalancer }}"
-#        dhcp: "{{ parsed_vm_definitions.epg_definitions[0].epg_dhcp }}"
-#      when: vars.get('vm_definitions', None) is not none
-
-    - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW new
+    - name: EXTRACT EPG_DEFINITIONS FROM SDIW FLOW
       set_fact:
         tenant: "{{ parsed_epg_definitions[0].epg_tenant | lower }}"
         application: "{{ parsed_epg_definitions[0].epg_application | lower }}"
