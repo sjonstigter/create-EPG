@@ -1,0 +1,23 @@
+vm_definitions: |-
+  - vm_name: "sditjvr1312"
+    vm_os: "windows"
+    vm_notes: "test jvr"
+    vm_application_abbreviation: "jvr"
+    vm_environment: "test"
+    vm_rekencentrum: "1"
+    vm_number: "312"
+    vm_epg: ""
+    vm_domain: ""
+    vm_role: "test_vm"
+sddc_portgroup: ''
+epg_definitions: |-
+  - epg_tenant: "ss_22"
+    epg_application: "myapp3"
+    epg_function: "wftest_02"
+    epg_envtype: "tst"
+    epg_os: "windows"
+    epg_vmm_domain: "vmm_shg"
+    epg_subnetmask: 28
+    epg_toolserver: false
+    epg_loadbalancer: false
+    epg_dhcp: true
