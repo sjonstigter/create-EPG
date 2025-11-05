@@ -43,10 +43,10 @@
       ss_22: "10.221.0.0/16"
 
   tasks:
-#    - name: LOAD SDIW VM_DEFINITIONS YAML STRING INTO DICTIONNARY
-#      set_fact:
-#        parsed_vm_definitions: "{{ vm_definitions | from_yaml }}"
-#      when: vars.get('vm_definitions', None) is not none
+    - name: LOAD SDIW VM_DEFINITIONS YAML STRING INTO DICTIONNARY
+      set_fact:
+        parsed_epg_definitions: "{{ epg_definitions | from_yaml }}"
+      when: vars.get('epg_definitions', None) is not none
 
 #    - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW
 #      set_fact:
@@ -64,16 +64,16 @@
 
     - name: EXTRACT VM_DEFINITIONS FROM SDIW FLOW
       set_fact:
-        tenant: "{{ epg_definitions[0].epg_tenant | lower }}"
-        application: "{{ epg_definitions[0].epg_application | lower }}"
-        function: "{{ epg_definitions[0].epg_function | default('') | lower }}"
-        cust_environment: "{{ epg_definitions[0].epg_envtype | lower }}"
-        os: "{{ epg_definitions[0].epg_os | lower }}"
-        vmm_domain: "{{ epg_definitions[0].epg_vmm_domain | lower }}"
-        subnetmask: "{{ epg_definitions[0].epg_subnetmask | int }}"
-        toolserver: "{{ epg_definitions[0].epg_toolserver }}"
-        loadbalancer: "{{ epg_definitions[0].epg_loadbalancer }}"
-        dhcp: "{{ epg_definitions[0].epg_dhcp }}"
+        tenant: "{{ parsed_epg_definitions[0].epg_tenant | lower }}"
+        application: "{{ parsed_epg_definitions[0].epg_application | lower }}"
+        function: "{{ parsed_epg_definitions[0].epg_function | default('') | lower }}"
+        cust_environment: "{{ parsed_epg_definitions[0].epg_envtype | lower }}"
+        os: "{{ parsed_epg_definitions[0].epg_os | lower }}"
+        vmm_domain: "{{ parsed_epg_definitions[0].epg_vmm_domain | lower }}"
+        subnetmask: "{{ parsed_epg_definitions[0].epg_subnetmask | int }}"
+        toolserver: "{{ parsed_epg_definitions[0].epg_toolserver }}"
+        loadbalancer: "{{ parsed_epg_definitions[0].epg_loadbalancer }}"
+        dhcp: "{{ parsed_epg_definitions[0].epg_dhcp }}"
       when: vars.get('epg_definitions', None) is not none
 
     - name: FORCE TO INTEGER
