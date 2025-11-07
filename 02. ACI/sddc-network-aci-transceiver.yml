@@ -15,25 +15,46 @@
         username: "{{ username }}"
         password: "{{ password }}"
         validate_certs: False
-        path: /api/class/ethpmFcot.json?query-target-filter=and(wcard(ethpmFcot.guiCiscoEID,"SFP-H25GB"))
+        path: /api/class/ethpmFcot.json
+#        path: /api/class/ethpmFcot.json?query-target-filter=and(wcard(ethpmFcot.guiCiscoEID,"SFP-H25GB"))
         method: get
       register: fcot_data
 
-    - name: Filter interfaces whose guiCiscoEID matches SFP-H25GB
+    - name: Get all physical interfaces (ethpmPhysIf)
+      cisco.aci.aci_rest:
+        provider: "{{ provider }}"
+        path: /api/class/ethpmPhysIf.json
+        method: get
+      register: physif_data
+
+    - name: Build a lookup of interface DN → operState
       set_fact:
-        matched_fibers: >-
+        oper_state_map: >-
+          {{
+            dict(physif_data.imdata
+                 | map(attribute='ethpmPhysIf.attributes')
+                 | map('extract', ['dn','operSt']))
+          }}
+
+    - name: Filter transceivers that match pattern and merge with operState
+      set_fact:
+        transceiver_info: >-
           {{
             fcot_data.imdata
             | map(attribute='ethpmFcot.attributes')
-            | selectattr('guiCiscoEID', 'search', sfp_pattern)
+            | selectattr('guiCiscoEID','search',sfp_pattern)
+            | map('combine',
+                  [{'operSt': (oper_state_map[item.dn.split('/phys-')[0]+'/phys'] | default('unknown'))}]
+                 )
             | list
           }}
 
-    - name: Display results
+    - name: Show node/interface, SFP type, serial, and oper state
       debug:
         msg: >-
           {{
-            matched_fibers
-            | map(attribute='dn')
+            transceiver_info
+            | map('extract',
+                  ['dn','guiCiscoEID','guiSN','operSt'])
             | list
           }}
