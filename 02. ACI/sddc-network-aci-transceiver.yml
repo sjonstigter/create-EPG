@@ -1,0 +1,39 @@
+- name: Query transceiver details
+  hosts: apic
+  connection: local
+  gather_facts: False
+
+  vars:
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+      sfp_pattern: "SFP-H25GB"
+
+  tasks:
+    - name: Query ethpmFcot objects from ACI
+      cisco.aci.aci_rest:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        validate_certs: False
+        path: /api/class/ethpmFcot.json?query-target-filter=and(wcard(ethpmFcot.guiCiscoEID,"SFP-H25GB"))
+        method: get
+      register: fcot_data
+
+    - name: Filter interfaces whose guiCiscoEID matches SFP-H25GB
+      set_fact:
+        matched_fibers: >-
+          {{
+            fcot_data.imdata
+            | map(attribute='ethpmFcot.attributes')
+            | selectattr('guiCiscoEID', 'search', sfp_pattern)
+            | list
+          }}
+
+    - name: Display results
+      debug:
+        msg: >-
+          {{
+            matched_fibers
+            | map(attribute='dn')
+            | list
+          }}
