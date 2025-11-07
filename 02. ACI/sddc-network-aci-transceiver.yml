@@ -22,7 +22,10 @@
 
     - name: Get all physical interfaces (ethpmPhysIf)
       cisco.aci.aci_rest:
-        provider: "{{ provider }}"
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        validate_certs: False
         path: /api/class/ethpmPhysIf.json
         method: get
       register: physif_data
