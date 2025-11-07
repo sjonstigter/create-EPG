@@ -1,12 +1,12 @@
 - name: Query transceiver details
   hosts: apic
   connection: local
-  gather_facts: False
+  gather_facts: false
 
   vars:
-      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
-      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
-      sfp_pattern: "SFP-H25GB"
+    username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+    password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+    sfp_pattern: "SFP-H25GB"
 
   tasks:
     - name: Query ethpmFcot objects from ACI
@@ -14,9 +14,8 @@
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
-        validate_certs: False
+        validate_certs: false
         path: /api/class/ethpmFcot.json
-#        path: /api/class/ethpmFcot.json?query-target-filter=and(wcard(ethpmFcot.guiCiscoEID,"SFP-H25GB"))
         method: get
       register: fcot_data
 
@@ -25,39 +24,55 @@
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
-        validate_certs: False
+        validate_certs: false
         path: /api/class/ethpmPhysIf.json
         method: get
       register: physif_data
 
+    # Build { "<.../phys>": "<operSt>" } safely using zip → dict
     - name: Build a lookup of interface DN → operState
       set_fact:
         oper_state_map: >-
           {{
-            dict(physif_data.imdata
-                 | map(attribute='ethpmPhysIf.attributes')
-                 | map('extract', ['dn','operSt']))
+            dict(
+              (physif_data.imdata
+                | map(attribute='ethpmPhysIf.attributes')
+                | map('extract', 'dn'))
+              | zip(
+                  physif_data.imdata
+                  | map(attribute='ethpmPhysIf.attributes')
+                  | map('extract', 'operSt')
+                )
+            )
           }}
 
-    - name: Filter transceivers that match pattern and merge with operState
+    # Walk matching transceivers and add an operSt from the physIf map
+    - name: Collect transceivers that match pattern and merge with operState
       set_fact:
-        transceiver_info: >-
-          {{
-            fcot_data.imdata
-            | map(attribute='ethpmFcot.attributes')
-            | selectattr('guiCiscoEID','search',sfp_pattern)
-            | map('combine',
-                  [{'operSt': (oper_state_map[item.dn.split('/phys-')[0]+'/phys'] | default('unknown'))}]
-                 )
-            | list
-          }}
+        transceiver_info: "{{ transceiver_info | default([]) + [ merged ] }}"
+      vars:
+        # For an fcot DN like ".../phys-[eth1/17]/phys/.../fcot"
+        # derive the base phys DN: ".../phys-[eth1/17]/phys"
+        base_phys_dn: "{{ (item.dn.split('/phys-')[0]) + '/phys' }}"
+        merged: "{{ item | combine({'operSt': (oper_state_map[base_phys_dn] | default('unknown'))}) }}"
+      loop: >-
+        {{
+          fcot_data.imdata
+          | map(attribute='ethpmFcot.attributes')
+          | selectattr('guiCiscoEID','search',sfp_pattern)
+          | list
+        }}
 
     - name: Show node/interface, SFP type, serial, and oper state
       debug:
         msg: >-
           {{
             transceiver_info
-            | map('extract',
-                  ['dn','guiCiscoEID','guiSN','operSt'])
+            | map('extract', 'dn') | zip(
+                transceiver_info | map('extract','guiCiscoEID'),
+                transceiver_info | map('extract','guiSN'),
+                transceiver_info | map('extract','operSt')
+              )
+            | map('list')
             | list
           }}
