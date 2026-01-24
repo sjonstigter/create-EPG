@@ -18,7 +18,7 @@
 #    - Add URL to the standard named URL category if found
 #
 # - If no standard named URL category is found then query the security rules to see if a security rule
-#   exists for our source_object that might use a non-standard named URL category list 
+#   exists for our source_object that might use a non-standard named URL category list
 #   (eg NOT uc_bd_application_function but perhaps uc_application or something else)
 #
 #    - If no security rule is found for source_object then a new URL category and security rule are created
@@ -86,7 +86,7 @@
         - name: Validate Palo Alto URL list entries - Show valid URLs
           debug:
             msg: |
-              Valid Palo Alto URLs: 
+              Valid Palo Alto URLs:
               {{ valid_urls | to_nice_yaml }}
 
       when: validate_url
@@ -119,7 +119,7 @@
       when: source_object | length == 0
 
     - name: Set URL Category name
-      set_fact: 
+      set_fact:
         uc_name: "uc_{{ source_object[0].split(' - ')[0] }}"
 
     - name: Handle Palo Alto field limit - Set original uc_name before truncation
@@ -186,7 +186,7 @@
           set_fact:
             filtered_rules: >-
               {{
-                security_rules.gathered | selectattr('source_ip', 'defined') 
+                security_rules.gathered | selectattr('source_ip', 'defined')
                                     | selectattr('source_ip', 'contains', source_object)
                                     | list
               }}
