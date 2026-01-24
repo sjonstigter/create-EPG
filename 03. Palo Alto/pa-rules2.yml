@@ -206,6 +206,15 @@
                 url_value: "{{ request_url_list }}"
                 state: "present"
 
+            - name: Site access - set custom URL category to ALERT (Shared URL filtering profile)
+              paloaltonetworks.panos.panos_config_element:
+                provider: "{{ provider }}"
+                xpath: "/config/shared/profiles/url-filtering/entry[@name='strict-proxy-bp']"
+                element: |
+                  <alert>
+                    <member>{{ uc_name }}</member>
+                  </alert>
+
             # TODO: Add URL category to URL Filtering profile strict-proxy-bp - No native ansible option/module? Check through pan_op or API call
 
             - name: Create proxy rule
