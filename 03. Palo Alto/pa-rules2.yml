@@ -91,30 +91,30 @@
 
       when: validate_url
 
-    - name: Find firewall object based on input variable - Strip name
+    - name: Find firewall object based on input variable - Strip bd_ or epg_ from name
       set_fact:
-        fw_object_name: >-
+        address_object_name: >-
           {{ epg_name | regex_replace('^(bd_|epg_)', '') }}
 
-    - name: Find firewall object based on input variable - Find address object
+    - name: Find firewall object based on input variable - Get address objects from Panorama
       paloaltonetworks.panos.panos_address_object:
         provider: "{{ provider }}"
         state: 'gathered'
         gathered_filter: '*'
       register: gathered_objects
 
-    - name: Find firewall object based on input variable - Set object
+    - name: Find firewall object based on input variable - Search for address object
       set_fact:
         source_object: >-
           {{ gathered_objects.gathered
-            | selectattr('name', 'search', fw_object_name)
+            | selectattr('name', 'search', address_object_name)
             | map(attribute='name')
             | list }}
 
     - name: Find firewall object based on input variable - Fail if no address object was found
       ansible.builtin.fail:
         msg: >-
-          No Palo Alto address_object found matching '{{ fw_object_name }}'
+          No Palo Alto address_object found matching '{{ address_object_name }}'
           (derived from epg_name='{{ epg_name }}').
       when: source_object | length == 0
 
