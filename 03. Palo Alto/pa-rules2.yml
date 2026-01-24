@@ -111,6 +111,13 @@
             | map(attribute='name')
             | list }}
 
+    - name: Fail if no address object was found
+      ansible.builtin.fail:
+        msg: >-
+          No Palo Alto address_object found matching '{{ fw_object_name }}'
+          (derived from epg_name='{{ epg_name }}').
+      when: source_object | length == 0
+
     - name: Set URL Category name
       set_fact: 
         uc_name: "uc_{{ source_object[0].split(' - ')[0] }}"
