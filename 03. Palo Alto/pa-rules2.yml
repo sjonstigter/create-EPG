@@ -206,12 +206,12 @@
                 url_value: "{{ request_url_list }}"
                 state: "present"
 
-            - name: Overwrite Site Access alert list (shared URL filtering profile)
-              paloaltonetworks.panos.panos_type_cmd:
-                provider: "{{ provider }}"
-                cmd: "edit"
-                xpath: "/config/shared/profiles/url-filtering/entry[@name='strict-proxy-bp']/alert"
-                element: "{{ uc_name }}"
+#            - name: Overwrite Site Access alert list (shared URL filtering profile)
+#              paloaltonetworks.panos.panos_type_cmd:
+#                provider: "{{ provider }}"
+#                cmd: "edit"
+#                xpath: "/config/shared/profiles/url-filtering/entry[@name='strict-proxy-bp']/alert"
+#                element: "{{ uc_name }}"
 
 #            - name: Set URL Filtering lists in shared profile (CLI set commands)
 #              paloaltonetworks.panos.panos_op:
@@ -220,11 +220,21 @@
 #                  set shared profiles url-filtering strict-proxy-bp credential-enforcement alert [ {{ uc_name }} ]
 #                  set shared profiles url-filtering strict-proxy-bp alert [ {{ uc_name }} ]
 
-#            - name: Set custom URL category to ALERT
-#              paloaltonetworks.panos.panos_config_element:
-#                provider: "{{ provider }}"
-#                xpath: "/config/shared/profiles/url-filtering/entry[@name='strict-proxy-bp']/alert"
-#                element: "[ {{ uc_name }} ]"
+            - name: Set custom URL category to ALERT
+              paloaltonetworks.panos.panos_config_element:
+                provider: "{{ provider }}"
+                xpath: "/config/shared/profiles/url-filtering"
+                element: |-
+                  <entry name="strict-proxy-bp">
+                    <credential-enforcement>
+                      <alert>
+                        <member>{{ uc_name }}</member>
+                      </alert>
+                    </credential-enforcement>
+                    <alert>
+                      <member>{{ uc_name }}</member>
+                    </alert>
+                  </entry>
 
 #            - name: Credential submissions - add URL category to ALERT list
 #              paloaltonetworks.panos.panos_config_element:
