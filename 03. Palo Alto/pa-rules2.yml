@@ -207,6 +207,7 @@
                 state: "present"
 
             - name: Set custom URL category to ALERT
+              # No Ansible module available to directly modify url-filtering, having to use panos_config_element with xpath and element
               paloaltonetworks.panos.panos_config_element:
                 provider: "{{ provider }}"
                 xpath: "/config/shared/profiles/url-filtering"
