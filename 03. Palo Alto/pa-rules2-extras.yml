@@ -1,6 +1,6 @@
     - name: Find tag based on input variable - Get our application name from the EPG name
       ansible.builtin.set_fact:
-        tag_object_name: "{{ epg_name.split('_')[1] }}"
+        tag_object_name: "{{ source_object.split('_')[1] }}"
 
     - name: Find tag based on input variable - Get tag objects from Panorama
       paloaltonetworks.panos.panos_tag_object:
@@ -17,9 +17,9 @@
             | map(attribute='name')
             | list }}
 
-    - name: Find tag based on input variable - Detect environment from epg_name
+    - name: Find tag based on input variable - Detect environment from epg name
       ansible.builtin.set_fact:
-        env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
+        env_tag: "{{ (source_object.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
 
 
 epg_name = epg_myapp1_webserver01_prd
