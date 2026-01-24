@@ -225,7 +225,7 @@
                 description: "{{ source_object[0].split(' - ')[0] }} to web"
                 #tag_name: ['production'] # TODO: See if we can find our application tags
                 source_zone: ['all']
-                source_ip: ['{{ source_object }}']
+                source_ip: ["{{ source_object[0] }}"]
                 destination_zone: ['all']
                 destination_ip: ['any']
                 service: ['service-https']
