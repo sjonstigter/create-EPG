@@ -61,7 +61,9 @@
         device_group: "ss-external"
         rule_name: "{{ source_object[0].split(' - ')[0] }} to web"
         description: "{{ source_object[0].split(' - ')[0] }} to web"
-        #tag_name: ['production'] # TODO: See if we can find our application tags
+        tag_name:
+          - "{{ tag_object | first }}"
+          - "{{ env_tag }}"
         source_zone: ['all']
         source_ip: "{{ source_object[0] }}"
         destination_zone: ['all']
