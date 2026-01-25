@@ -52,12 +52,12 @@
       # This function checks if the URL's provided in the request_url_list URL list are valid Palo Alto accepted URL's
       block:
 
-        - name: Validate Palo Alto URL list entries - Initialize lists
+        - name: Validate Palo Alto URL list entries [1/5] - Initialize lists
           ansible.builtin.set_fact:
             valid_urls: []
             invalid_urls: []
 
-        - name: Validate Palo Alto URL list entries [1/4] - Categorize URLs
+        - name: Validate Palo Alto URL list entries [2/5] - Categorize URLs
           vars:
             # Checks to run against URL while looping through request_url_list
             starts_with_protocol: "{{ item.startswith('http://') or item.startswith('https://') }}" # URL cannot begin with protocol like http(s)
@@ -72,18 +72,18 @@
             label: "{{ item }}"
           when: not (starts_with_protocol or has_invalid_chars or is_ip or not caret_ok)
 
-        - name: Validate Palo Alto URL list entries [2/4] - Collect invalid URLs
+        - name: Validate Palo Alto URL list entries [3/5] - Collect invalid URLs
           ansible.builtin.set_fact:
             invalid_urls: "{{ request_url_list | difference(valid_urls) }}"
 
-        - name: Validate Palo Alto URL list entries [3/4] - Fail if invalid URLs exist
+        - name: Validate Palo Alto URL list entries [4/5] - Fail if invalid URLs exist
           ansible.builtin.fail:
             msg: |
               Invalid Palo Alto URLs found:
               {{ invalid_urls | to_nice_yaml }}
           when: invalid_urls | length > 0
 
-        - name: Validate Palo Alto URL list entries [4/4] - Show valid URLs
+        - name: Validate Palo Alto URL list entries [5/5] - Show valid URLs
           ansible.builtin.debug:
             msg: |
               Valid Palo Alto URLs:
