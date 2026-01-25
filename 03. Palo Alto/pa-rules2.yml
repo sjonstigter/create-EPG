@@ -57,7 +57,7 @@
             valid_urls: []
             invalid_urls: []
 
-        - name: Validate Palo Alto URL list entries - Categorize URLs
+        - name: Validate Palo Alto URL list entries [1/4] - Categorize URLs
           vars:
             # Checks to run against URL while looping through request_url_list
             starts_with_protocol: "{{ item.startswith('http://') or item.startswith('https://') }}" # URL cannot begin with protocol like http(s)
@@ -72,18 +72,18 @@
             label: "{{ item }}"
           when: not (starts_with_protocol or has_invalid_chars or is_ip or not caret_ok)
 
-        - name: Validate Palo Alto URL list entries - Collect invalid URLs
+        - name: Validate Palo Alto URL list entries [2/4] - Collect invalid URLs
           ansible.builtin.set_fact:
             invalid_urls: "{{ request_url_list | difference(valid_urls) }}"
 
-        - name: Validate Palo Alto URL list entries - Fail if invalid URLs exist
+        - name: Validate Palo Alto URL list entries [3/4] - Fail if invalid URLs exist
           ansible.builtin.fail:
             msg: |
               Invalid Palo Alto URLs found:
               {{ invalid_urls | to_nice_yaml }}
           when: invalid_urls | length > 0
 
-        - name: Validate Palo Alto URL list entries - Show valid URLs
+        - name: Validate Palo Alto URL list entries [4/4] - Show valid URLs
           ansible.builtin.debug:
             msg: |
               Valid Palo Alto URLs:
@@ -91,19 +91,19 @@
 
       when: validate_url
 
-    - name: Find firewall object based on input variable - Strip bd_ or epg_ from input epg_name variable
+    - name: Find firewall object based on input variable [1/4] - Strip bd_ or epg_ from input epg_name variable
       ansible.builtin.set_fact:
         address_object_name: >-
           {{ epg_name | regex_replace('^(bd_|epg_)', '') }}
 
-    - name: Find firewall object based on input variable - Get address objects from Panorama
+    - name: Find firewall object based on input variable [2/4] - Get address objects from Panorama
       paloaltonetworks.panos.panos_address_object:
         provider: "{{ provider }}"
         state: 'gathered'
         gathered_filter: '*'
       register: gathered_objects
 
-    - name: Find firewall object based on input variable - Search for address object
+    - name: Find firewall object based on input variable [3/4] - Search for address object
       ansible.builtin.set_fact:
         source_object: >-
           {{ gathered_objects.gathered
@@ -111,7 +111,7 @@
             | map(attribute='name')
             | list }}
 
-    - name: Find firewall object based on input variable - Fail if no address object was found
+    - name: Find firewall object based on input variable [4/4] - Fail if no address object was found
       ansible.builtin.fail:
         msg: >-
           No Palo Alto address_object found matching '{{ address_object_name }}'
@@ -122,15 +122,15 @@
       ansible.builtin.set_fact:
         uc_name: "uc_{{ source_object[0].split(' - ')[0] }}"
 
-    - name: Handle Palo Alto field limit - Set original uc_name before truncation
+    - name: Handle Palo Alto field limit [1/3] - Set original uc_name before truncation
       ansible.builtin.set_fact:
         original_uc_name: "{{ 'uc_' + source_object[0].split(' - ')[0] }}"
 
-    - name: Handle Palo Alto field limit - Truncate uc_name to max 31 characters
+    - name: Handle Palo Alto field limit [2/3] - Truncate uc_name to max 31 characters
       ansible.builtin.set_fact:
         uc_name: "{{ original_uc_name[:31] }}"
 
-    - name: Handle Palo Alto field limit - Warn if uc_name was truncated
+    - name: Handle Palo Alto field limit [3/3] - Warn if uc_name was truncated
       ansible.builtin.debug:
         msg: "WARNING: uc_name was truncated from {{ original_uc_name }} to {{ uc_name }}"
       when: original_uc_name | length > 31
