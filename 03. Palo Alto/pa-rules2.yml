@@ -91,7 +91,7 @@
 
       when: validate_url
 
-    - name: Find firewall object based on input variable - Strip bd_ or epg_ from name
+    - name: Find firewall object based on input variable - Strip bd_ or epg_ from input epg_name variable
       ansible.builtin.set_fact:
         address_object_name: >-
           {{ epg_name | regex_replace('^(bd_|epg_)', '') }}
