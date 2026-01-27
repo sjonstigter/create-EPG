@@ -1,0 +1,77 @@
+    - name: Find tag based on input variable - Get our application name from the EPG name
+      ansible.builtin.set_fact:
+        tag_object_name: "{{ source_object.split('_')[1] }}"
+
+    - name: Find tag based on input variable - Get tag objects from Panorama
+      paloaltonetworks.panos.panos_tag_object:
+        provider: "{{ provider }}"
+        state: 'gathered'
+        gathered_filter: '*'
+      register: gathered_tag_objects
+
+    - name: Find tag based on input variable - Search for tag object
+      ansible.builtin.set_fact:
+        tag_object: >-
+          {{ gathered_tag_objects.gathered
+            | selectattr('name', 'search', tag_object_name)
+            | map(attribute='name')
+            | list }}
+
+    - name: Find tag based on input variable - Detect environment from epg name
+      ansible.builtin.set_fact:
+        env_tag: "{{ (source_object.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
+
+
+
+
+
+
+    - name: Get all security rules from the device
+      paloaltonetworks.panos.panos_security_rule:
+        provider: "{{ provider }}"
+        device_group: "ss-external"
+        state: 'gathered'
+        gathered_filter: '*'
+      register: security_rules
+
+    - name: Fail if tag is not uniquely found
+      ansible.builtin.assert:
+        that:
+          - tag_object | length == 1
+        fail_msg: "Tag lookup is not unique or missing. Matches: {{ tag_object }}"
+
+    - name: Filter rules with a tag matching tag object
+      ansible.builtin.set_fact:
+        filtered_rules: >-
+          {{
+            security_rules.gathered
+            | selectattr('tag', 'defined')
+            | selectattr('tag', 'contains', (tag_object | first))
+            | list
+          }}
+
+    - name: Get last rule name from filtered_rules
+      ansible.builtin.set_fact:
+        last_rule_name: "{{ (filtered_rules | last).name }}"
+      when: filtered_rules | length > 0
+
+    - name: Create proxy rule
+      paloaltonetworks.panos.panos_security_rule:
+        provider: "{{ provider }}"
+        device_group: "ss-external"
+        rule_name: "{{ source_object[0].split(' - ')[0] }} to web"
+        description: "{{ source_object[0].split(' - ')[0] }} to web"
+        tag_name:
+          - "{{ tag_object | first }}"
+          - "{{ env_tag }}"
+        source_zone: ['all']
+        source_ip: "{{ source_object[0] }}"
+        destination_zone: ['all']
+        destination_ip: ['any']
+        service: ['service-https']
+        category: "{{ uc_name }}"
+        action: 'allow'
+        location: 'after'
+        existing_rule: "{{ last_rule_name }}"
+
+epg_name = epg_myapp1_webserver01_prd

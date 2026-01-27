@@ -18,7 +18,7 @@
 #    - Add URL to the standard named URL category if found
 #
 # - If no standard named URL category is found then query the security rules to see if a security rule
-#   exists for our source_object that might use a non-standard named URL category list 
+#   exists for our source_object that might use a non-standard named URL category list
 #   (eg NOT uc_bd_application_function but perhaps uc_application or something else)
 #
 #    - If no security rule is found for source_object then a new URL category and security rule are created
@@ -44,7 +44,7 @@
 
   tasks:
     - name: Convert input URL list string to list if needed
-      set_fact:
+      ansible.builtin.set_fact:
         request_url_list: "{{ url_list | from_yaml }}"
       when: url_list is string
 
@@ -52,19 +52,19 @@
       # This function checks if the URL's provided in the request_url_list URL list are valid Palo Alto accepted URL's
       block:
 
-        - name: Validate Palo Alto URL list entries - Initialize lists
-          set_fact:
+        - name: Validate Palo Alto URL list entries [1/5] - Initialize lists
+          ansible.builtin.set_fact:
             valid_urls: []
             invalid_urls: []
 
-        - name: Validate Palo Alto URL list entries - Categorize URLs
+        - name: Validate Palo Alto URL list entries [2/5] - Categorize URLs
           vars:
             # Checks to run against URL while looping through request_url_list
             starts_with_protocol: "{{ item.startswith('http://') or item.startswith('https://') }}" # URL cannot begin with protocol like http(s)
             has_invalid_chars: "{{ ' ' in item }}" # URL has invalid characters
             is_ip: "{{ item | regex_search('^\\d{1,3}(\\.\\d{1,3}){3}$') is not none }}" # URL is an IP address
             caret_ok: "{{ not ('/^' in item) }}" # Incorrect use of caret
-          set_fact:
+          ansible.builtin.set_fact:
             valid_urls: "{{ valid_urls + [item] }}"
             invalid_urls: "{{ invalid_urls + [item] }}"
           loop: "{{ request_url_list }}"
@@ -72,59 +72,66 @@
             label: "{{ item }}"
           when: not (starts_with_protocol or has_invalid_chars or is_ip or not caret_ok)
 
-        - name: Validate Palo Alto URL list entries - Collect invalid URLs
-          set_fact:
+        - name: Validate Palo Alto URL list entries [3/5] - Collect invalid URLs
+          ansible.builtin.set_fact:
             invalid_urls: "{{ request_url_list | difference(valid_urls) }}"
 
-        - name: Validate Palo Alto URL list entries - Fail if invalid URLs exist
-          fail:
+        - name: Validate Palo Alto URL list entries [4/5] - Fail if invalid URLs exist
+          ansible.builtin.fail:
             msg: |
               Invalid Palo Alto URLs found:
               {{ invalid_urls | to_nice_yaml }}
           when: invalid_urls | length > 0
 
-        - name: Validate Palo Alto URL list entries - Show valid URLs
-          debug:
+        - name: Validate Palo Alto URL list entries [5/5] - Show valid URLs
+          ansible.builtin.debug:
             msg: |
-              Valid Palo Alto URLs: 
+              Valid Palo Alto URLs:
               {{ valid_urls | to_nice_yaml }}
 
       when: validate_url
 
-    - name: Find firewall object based on input variable - Strip name
-      set_fact:
-        fw_object_name: >-
+    - name: Find firewall object based on input variable [1/4] - Strip bd_ or epg_ from input epg_name variable
+      ansible.builtin.set_fact:
+        address_object_name: >-
           {{ epg_name | regex_replace('^(bd_|epg_)', '') }}
 
-    - name: Find firewall object based on input variable - Find address object
+    - name: Find firewall object based on input variable [2/4] - Get address objects from Panorama
       paloaltonetworks.panos.panos_address_object:
         provider: "{{ provider }}"
         state: 'gathered'
         gathered_filter: '*'
       register: gathered_objects
 
-    - name: Find firewall object based on input variable - Set object
-      set_fact:
+    - name: Find firewall object based on input variable [3/4] - Search for address object
+      ansible.builtin.set_fact:
         source_object: >-
           {{ gathered_objects.gathered
-            | selectattr('name', 'search', fw_object_name)
+            | selectattr('name', 'search', address_object_name)
             | map(attribute='name')
             | list }}
 
+    - name: Find firewall object based on input variable [4/4] - Fail if no address object was found
+      ansible.builtin.fail:
+        msg: >-
+          No Palo Alto address_object found matching '{{ address_object_name }}'
+          (derived from epg_name='{{ epg_name }}').
+      when: source_object | length == 0
+
     - name: Set URL Category name
-      set_fact: 
+      ansible.builtin.set_fact:
         uc_name: "uc_{{ source_object[0].split(' - ')[0] }}"
 
-    - name: Handle Palo Alto field limit - Set original uc_name before truncation
-      set_fact:
+    - name: Handle Palo Alto field limit [1/3] - Set original uc_name before truncation
+      ansible.builtin.set_fact:
         original_uc_name: "{{ 'uc_' + source_object[0].split(' - ')[0] }}"
 
-    - name: Handle Palo Alto field limit - Truncate uc_name to max 31 characters
-      set_fact:
+    - name: Handle Palo Alto field limit [2/3] - Truncate uc_name to max 31 characters
+      ansible.builtin.set_fact:
         uc_name: "{{ original_uc_name[:31] }}"
 
-    - name: Handle Palo Alto field limit - Warn if uc_name was truncated
-      debug:
+    - name: Handle Palo Alto field limit [3/3] - Warn if uc_name was truncated
+      ansible.builtin.debug:
         msg: "WARNING: uc_name was truncated from {{ original_uc_name }} to {{ uc_name }}"
       when: original_uc_name | length > 31
 
@@ -137,7 +144,7 @@
       register: gathered_categories
 
     - name: Check if category '{{ uc_name }}' exists
-      set_fact:
+      ansible.builtin.set_fact:
         url_category_exists: >-
           {{ uc_name in gathered_categories.gathered | map(attribute='name') | list }}
 
@@ -152,7 +159,7 @@
             state: "merged"
 
         - name: Set commit needed to true
-          set_fact:
+          ansible.builtin.set_fact:
             commit: true
           when: perform_commit
 
@@ -171,22 +178,22 @@
           register: security_rules
 
         - name: DEBUG - Display matching rules
-          debug:
+          ansible.builtin.debug:
             var: security_rules
           when: debug
 
         - name: Filter rules with source object "{{ source_object }}"
-          set_fact:
+          ansible.builtin.set_fact:
             filtered_rules: >-
               {{
-                security_rules.gathered | selectattr('source_ip', 'defined') 
+                security_rules.gathered | selectattr('source_ip', 'defined')
                                     | selectattr('source_ip', 'contains', source_object)
                                     | list
               }}
           # TODO: Check doc on source_ip vs source object
 
         - name: DEBUG - Display matching rules
-          debug:
+          ansible.builtin.debug:
             var: filtered_rules
           when: debug
 
@@ -206,7 +213,22 @@
                 url_value: "{{ request_url_list }}"
                 state: "present"
 
-            # TODO: Add URL category to URL Filtering profile strict-proxy-bp - No native ansible option/module? Check through pan_op or API call
+            - name: Set new URL category to ALERT under the url-filtering profile
+              # No Ansible module available to directly modify url-filtering, having to use panos_config_element with xpath and element
+              paloaltonetworks.panos.panos_config_element:
+                provider: "{{ provider }}"
+                xpath: "/config/shared/profiles/url-filtering"
+                element: |-
+                  <entry name="strict-proxy-bp">
+                    <credential-enforcement>
+                      <alert>
+                        <member>{{ uc_name }}</member>
+                      </alert>
+                    </credential-enforcement>
+                    <alert>
+                      <member>{{ uc_name }}</member>
+                    </alert>
+                  </entry>
 
             - name: Create proxy rule
               paloaltonetworks.panos.panos_security_rule:
@@ -216,7 +238,7 @@
                 description: "{{ source_object[0].split(' - ')[0] }} to web"
                 #tag_name: ['production'] # TODO: See if we can find our application tags
                 source_zone: ['all']
-                source_ip: ['{{ source_object }}']
+                source_ip: "{{ source_object[0] }}"
                 destination_zone: ['all']
                 destination_ip: ['any']
                 service: ['service-https']
@@ -224,12 +246,12 @@
                 action: 'allow'
 
             - name: Set commit needed to true
-              set_fact:
+              ansible.builtin.set_fact:
                 commit: true
               when: perform_commit
 
             - name: Set push needed to true
-              set_fact:
+              ansible.builtin.set_fact:
                 push: true
               when: perform_commit
 
@@ -240,21 +262,21 @@
           block:
 
             - name: Initialize list of categories
-              set_fact:
+              ansible.builtin.set_fact:
                 url_categories: []
 
             - name: Append category to list
-              set_fact:
+              ansible.builtin.set_fact:
                 url_categories: "{{ url_categories + [item.category | join(', ')] }}"
               loop: "{{ filtered_rules }}"
 
             - name: DEBUG - Display all categories
-              debug:
+              ansible.builtin.debug:
                 var: url_categories
               when: debug
 
             - name: Fail if more than one URL category is found for our source object
-              fail:
+              ansible.builtin.fail:
                 msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
               when: url_categories | length > 1
 
@@ -266,7 +288,7 @@
                 state: "merged"
 
             - name: Set commit needed to true
-              set_fact:
+              ansible.builtin.set_fact:
                 commit: true
               when: perform_commit
 
