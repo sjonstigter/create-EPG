@@ -1,0 +1,250 @@
+---
+###########################################################################################################
+# Create Cisco ACI EPG
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Create Bridge Domain in common:default
+# - Create Subnet/gateway using ansible.utils.ipaddr
+# - Add DHCP relay label to BD
+# - Associate L3out to BD
+# - Create ANP
+# - Create EPG
+# - Bind VMM to EPG
+# - Apply Contract Masters to EPG (linux/windows)
+#
+# Requirements:
+# - ansible>=2.4.2.0
+# - cisco.aci ansible module (ansible-galaxy collection install cisco.aci)
+# - ansible.utils module (ansible-galaxy collection install ansible.utils)
+# - Python netaddr (pip install netaddr) - used for converting network range to gateway + cidr subnet
+#   and used by ansible.utils.ipaddr
+#
+###########################################################################################################
+
+- name: CREATE ACI EPG
+  hosts: apic
+  connection: local
+  gather_facts: False
+
+  vars:
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+
+  tasks:
+    - name: LOAD SDIW EPG_DEFINITIONS YAML STRING INTO DICTIONNARY
+      ansible.builtin.set_fact:
+        parsed_epg_definitions: "{{ epg_definitions | from_yaml }}"
+      when: vars.get('epg_definitions', None) is not none
+
+    - name: EXTRACT EPG_DEFINITIONS FROM SDIW FLOW
+      ansible.builtin.set_fact:
+        tenant: "{{ parsed_epg_definitions[0].epg_tenant | lower }}"
+        application: "{{ parsed_epg_definitions[0].epg_application | lower }}"
+        function: "{{ parsed_epg_definitions[0].epg_function | default('') | lower }}"
+        cust_environment: "{{ parsed_epg_definitions[0].epg_envtype | lower }}"
+        os: "{{ parsed_epg_definitions[0].epg_os | lower }}"
+        vmm_domain: "{{ parsed_epg_definitions[0].epg_vmm_domain | lower }}"
+        subnetmask: "{{ parsed_epg_definitions[0].epg_subnetmask | int }}"
+        toolserver: "{{ parsed_epg_definitions[0].epg_toolserver }}"
+        loadbalancer: "{{ parsed_epg_definitions[0].epg_loadbalancer }}"
+        dhcp: "{{ parsed_epg_definitions[0].epg_dhcp }}"
+      when: vars.get('epg_definitions', None) is not none
+
+    - name: FAIL IF MANDATORY VARS ARE MISSING
+      ansible.builtin.fail:
+        msg: "One or more required variables are undefined!"
+      when: >
+        tenant is not defined or
+        application is not defined or
+        cust_environment is not defined or
+        os is not defined or
+        vmm_domain is not defined or
+        subnetmask is not defined or
+        subnet is not defined or
+        toolserver is not defined or
+        loadbalancer is not defined
+
+    - name: SET TOOLSERVER ANP MAPPING
+      ansible.builtin.set_fact:
+        tenant_toolserver:
+          shg: "shg_toolservers"
+          common: "sdi_toolservers"
+      when: toolserver|default(false)|bool
+
+    - name: SET COMMON NAMES
+      ansible.builtin.set_fact:
+        bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        epg_name: "epg_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+        anp_name: "{{ 'anp_' + (tenant_toolserver[tenant] if toolserver|bool else application) }}"
+        lag_policy: "lacp_{{ vmm_domain }}"
+
+    - name: INCLUDE SPECIAL CASE FOR FORMAT OVERIDES
+      ansible.builtin.include_tasks: includes/overwrite_common_names.yml
+
+    - name: CREATE BRIDGE DOMAIN
+      cisco.aci.aci_bd:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "{{ bd_name }}"
+        vrf: "default"
+        description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided
+        annotation: ""
+        arp_flooding: "true"
+        endpoint_move_detect: "garp"
+        monitoring_policy: "default"
+
+    - name: CREATE BRIDGE DOMAIN SUBNET
+      cisco.aci.aci_bd_subnet:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "{{ bd_name }}"
+        gateway: "{{ subnet | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('-2') }}" # Get last IP in range for gateway address
+        mask: "{{ subnetmask|int }}"
+        scope: "public"
+        subnet_control: "unspecified"
+        annotation: ""
+
+    - name: ADD DHCP LABEL
+      cisco.aci.aci_bd_dhcp_label:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "{{ bd_name }}"
+        dhcp_label: "dhcp_infoblox_ddi"
+        scope: "infra"
+        annotation: ""
+
+    - name: ASSOCIATE BD TO L3OUT
+      cisco.aci.aci_bd_to_l3out:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "common"
+        bd: "{{ bd_name }}"
+        l3out: "l3out_common-default"
+        annotation: ""
+
+    - name: CREATE APPLICATION PROFILE
+      cisco.aci.aci_ap:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        annotation: ""
+
+    - name: CREATE EPG
+      cisco.aci.aci_epg:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "{{ epg_name }}"
+        bd: "{{ bd_name }}"
+        description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided
+        annotation: ""
+
+    - name: BIND EPG TO VM DOMAIN
+      cisco.aci.aci_epg_to_domain:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "{{ epg_name }}"
+        domain: "{{ vmm_domain }}"
+        domain_type: "vmm"
+        vm_provider: "vmware"
+        encap_mode: "auto"
+        enhanced_lag_policy: "{{ lag_policy }}"
+        resolution_immediacy: "pre-provision"
+
+    - name: ENSURE EPG IS ASSOCIATED TO CONTRACT MASTERS
+      cisco.aci.aci_epg_to_contract_master:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "{{ epg_name }}"
+        contract_master_ap: "anp_contract_masters"
+        contract_master_epg: "epg_cm_{{ tenant }}_{{ os }}"
+
+    - name: ADD INSTANCEMANAGER TO LB CONTRACT IF EPG IS LB
+      cisco.aci.aci_epg_to_contract:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "{{ epg_name }}"
+        contract: "con_instancemanager_to_lb"
+        contract_type: "provider"
+      when: loadbalancer|default(false)|bool
+
+    - name: ADD LB TO INSTANCEMANAGER CONTRACT IF EPG IS LB
+      cisco.aci.aci_epg_to_contract:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "{{ epg_name }}"
+        contract: "con_lb_to_instancemanager"
+        contract_type: "consumer"
+      when: loadbalancer|default(false)|bool
+
+    - name: ADD ADC CONTRACT IF EPG IS LB OR ADC
+      cisco.aci.aci_epg_to_contract:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ anp_name }}"
+        epg: "{{ epg_name }}"
+        contract: "con_splunk_otel_adc"
+        contract_type: "consumer"
+      when: loadbalancer|default(false)|bool
+
+    - name: SET STAT THE TENNANT-ANP-EPG FOR FURTHER WORKFLOW
+      ansible.builtin.set_stats:
+        data:
+          sddc_tenant: "{{ tenant }}"
+          sddc_anp: "{{ anp_name }}"
+          sddc_epg: "{{ epg_name }}"
+          sddc_portgroup: "{{ tenant }}|{{ anp_name }}|{{ epg_name }}"
+
+    - name: SET STAT THE VM_DEFINITIONS TO RETURN TO SDIW
+      ansible.builtin.set_stats:
+        data:
+          vm_definitions: "{{ vm_definitions }}"
+      when: vars.get('vm_definitions', None) is not none
