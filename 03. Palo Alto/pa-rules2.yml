@@ -37,6 +37,7 @@
     validate_url: true # set to true to validate if URL's are according to Palo Alto required format
     perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
     debug: false # set to true to show extra debug information
+    lookup_tags: true # set to true to attempt policy rule tag lookup
     provider:
       ip_address: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
@@ -229,6 +230,33 @@
                       <member>{{ uc_name }}</member>
                     </alert>
                   </entry>
+
+            - name: Find tag based on input variable
+              when: lookup_tags
+              block:
+
+                - name: Find tag based on input variable - Get our application name from the EPG name
+                  ansible.builtin.set_fact:
+                    tag_object_name: "{{ source_object[0].split('_')[1] }}"
+
+                - name: Find tag based on input variable - Get tag objects from Panorama
+                  paloaltonetworks.panos.panos_tag_object:
+                    provider: "{{ provider }}"
+                    state: 'gathered'
+                    gathered_filter: '*'
+                  register: gathered_tag_objects
+
+                - name: Find tag based on input variable - Search for tag object
+                  ansible.builtin.set_fact:
+                    tag_object: >-
+                      {{ gathered_tag_objects.gathered
+                        | selectattr('name', 'search', tag_object_name)
+                        | map(attribute='name')
+                        | list }}
+
+                - name: Find tag based on input variable - Detect environment from epg name
+                  ansible.builtin.set_fact:
+                    env_tag: "{{ (source_object.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
 
             - name: Create proxy rule
               paloaltonetworks.panos.panos_security_rule:
