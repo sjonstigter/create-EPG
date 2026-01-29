@@ -1,0 +1,139 @@
+---
+###########################################################################################################
+# Create Palo Alto firewall object
+###########################################################################################################
+#
+# This script performs the following steps:
+# - Create Palo Alto network object
+#
+# Requirements:
+# - ansible>=2.15.0
+# - paloaltonetworks.panos ansible module (ansible-galaxy collection install paloaltonetworks.panos)
+# - Python module pan-python (pip install pan-python) when using panos_module, else use API
+#
+###########################################################################################################
+
+- name: CREATE PALO ALTO OBJECT
+  hosts: "panorama"
+  connection: local
+  gather_facts: False
+
+  vars:
+    provider:
+      ip_address: "{{ inventory_hostname }}"
+      username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+      password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+    use_panos: false
+
+  tasks:
+    - name: LOAD SDIW EPG_DEFINITIONS YAML STRING INTO DICTIONNARY
+      ansible.builtin.set_fact:
+        parsed_epg_definitions: "{{ epg_definitions | from_yaml }}"
+      when: vars.get('epg_definitions', None) is not none
+
+    - name: EXTRACT EPG_DEFINITIONS FROM SDIW FLOW
+      ansible.builtin.set_fact:
+        tenant: "{{ parsed_epg_definitions[0].epg_tenant | lower }}"
+        application: "{{ parsed_epg_definitions[0].epg_application | lower }}"
+        function: "{{ parsed_epg_definitions[0].epg_function | default('') | lower }}"
+        cust_environment: "{{ parsed_epg_definitions[0].epg_envtype | lower }}"
+        os: "{{ parsed_epg_definitions[0].epg_os | lower }}"
+        vmm_domain: "{{ parsed_epg_definitions[0].epg_vmm_domain | lower }}"
+        subnetmask: "{{ parsed_epg_definitions[0].epg_subnetmask | int }}"
+        toolserver: "{{ parsed_epg_definitions[0].epg_toolserver }}"
+        loadbalancer: "{{ parsed_epg_definitions[0].epg_loadbalancer }}"
+        dhcp: "{{ parsed_epg_definitions[0].epg_dhcp }}"
+      when: vars.get('epg_definitions', None) is not none
+
+    - name: FAIL IF MANDATORY VARS ARE MISSING
+      ansible.builtin.fail:
+        msg: "One or more required variables are undefined!"
+      when: >
+        application is not defined or
+        cust_environment is not defined or
+        subnet is not defined
+
+    - name: SET COMMON NAMES
+      ansible.builtin.set_fact:
+        obj_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }} - {{ subnet | replace('/','_') }}"
+
+    - name: INCLUDE SPECIAL CASE FOR FORMAT OVERIDES
+      ansible.builtin.include_tasks: includes/overwrite_common_names.yml
+
+    - name: CREATE NETWORK OBJECT THROUGH API
+      when: not use_panos | default(false)
+      block:
+
+        - name: GET API KEY
+          ansible.builtin.uri:
+            url: "https://{{ provider.ip_address }}/api/?type=keygen&user={{ provider.username }}&password={{ provider.password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+          register: key_response
+
+        - name: EXTRACT API KEY FROM RESPONSE
+          ansible.builtin.set_fact:
+            api_key: "{{ key_response.content | regex_search('<key>([^<]+)</key>', '\\1') }}"
+
+        - name: ADD ADDRESS OBJECT WITH API
+          ansible.builtin.uri:
+            url: "https://{{ provider.ip_address }}/api/"
+            method: POST
+            validate_certs: no
+            body_format: form-urlencoded
+            body:
+              type: config
+              action: set
+              key: "{{ api_key.0 }}"
+              xpath: "/config/shared/address"
+              element: |
+                <entry name='{{ obj_name }}'>
+                  <ip-netmask>{{ subnet }}</ip-netmask>
+                </entry>
+            return_content: yes
+          register: api_response
+
+        - name: SHOW API RESPONSE
+          ansible.builtin.debug:
+            var: api_response.content
+
+        - name: FAIL IF API RESPONSE CONTAINS ERROR
+          # Palo Alto API doesn't do proper error http response codes, fail job if response message contains error
+          ansible.builtin.fail:
+            msg: "API call failed: {{ api_response.content }}"
+          when: "'status=\"error\"' in api_response.content"
+
+        - name: COMMIT THROUGH API
+          ansible.builtin.uri:
+            url: "https://{{ provider.ip_address }}/api/"
+            method: POST
+            validate_certs: no
+            body_format: form-urlencoded
+            body:
+              type: commit
+              cmd: "<commit><partial><admin>{{ provider.username }}</admin></partial></commit>"
+              key: "{{ api_key.0 }}"
+            return_content: yes
+          register: commit_response
+
+        - name: SHOW COMMIT RESPONSE
+          ansible.builtin.debug:
+            var: commit_response.content
+
+    - name: CREATE NETWORK OBJECT THROUGH PANOS MODULE
+      when: use_panos | default(false)
+      block:
+
+        - name: CREATE NETWORK OBJECT
+          paloaltonetworks.panos.panos_address_object:
+            provider: "{{ provider }}"
+            name: "{{ obj_name }}"
+            value: "{{ subnet }}"
+            device_group: shared
+
+        - name: COMMIT CHANGES BY API-USER ON PANORAMA
+          paloaltonetworks.panos.panos_commit_panorama:
+            provider: "{{ provider }}"
+            admins: ['{{ provider.username }}']
+            description: "{{ ticket_num | default('') }}"  # Optional: leave empty if not provided

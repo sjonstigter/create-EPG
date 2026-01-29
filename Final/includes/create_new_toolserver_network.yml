@@ -1,0 +1,52 @@
+- name: SET TOOLSERVER CONTAINER DEFINITION
+  ansible.builtin.set_fact:
+    tenant_toolserver:
+      shg: "shg_toolservers"
+      common: "sdi_toolservers"
+
+- name: SELECT TOOLSERVER CONTAINER FOR TENANT
+  ansible.builtin.set_fact:
+    toolserver_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': tenant_toolserver[tenant]}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+- name: FILTER CONTAINERS BY ENVIRONMENT
+  ansible.builtin.set_fact:
+    toolserver_env_network_containers: "{{ toolserver_container_result | selectattr('extattrs.env', 'search', cust_environment) | list }}"
+
+- name: DEBUG ENVIRONMENT NETWORK CONTAINERS
+  ansible.builtin.debug:
+    var: toolserver_env_network_containers
+
+- name: SELECT NETWORK CONTAINER WITH HIGHEST SUBNET-ID
+  ansible.builtin.set_fact:
+    toolserver_max_subnet: "{{ toolserver_env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
+
+- name: DEBUG SELECTED CONTAINER
+  ansible.builtin.debug:
+    var: toolserver_max_subnet
+
+- name: RETURN NEXT AVAILABLE IP SUBNET FROM TOOLSERVER CONTAINER
+  ansible.builtin.set_fact:
+    toolserver_networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', toolserver_max_subnet.network, cidr=29, provider=nios_provider) }}"
+
+- name: SHOW NEW NETWORKADDR
+  ansible.builtin.debug:
+    var: toolserver_networkaddr
+
+- name: CREATE IPV4 NETWORK WITH INFOBLOX TEMPLATE
+  infoblox.nios_modules.nios_network:
+    network: "{{ toolserver_networkaddr[0] }}" # Dereference the returned list to a string by adding [0]
+    comment: "{{ bd_name }}"
+    template: "onead_29{% if not ( dhcp | bool ) %}_nodhcp{% endif %}"
+    state: present
+    provider: "{{ nios_provider }}"
+
+- name: SET STAT THE NETWORK ADDRESS FOR FURTHER WORKFLOW
+  ansible.builtin.set_stats:
+    data:
+      subnet: "{{ toolserver_networkaddr[0] }}"
+
+- name: RESTART INFOBLOX SERVICES INCLUDE
+  ansible.builtin.include_tasks: includes/restart-infoblox-services.yml
+
+- name: END PLAY - NOTHING MORE TO DO
+  ansible.builtin.meta: end_play

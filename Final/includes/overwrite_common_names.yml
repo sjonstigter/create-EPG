@@ -1,0 +1,103 @@
+###########################################################################################################
+# USE THIS FILE TO OVERWRITE THE DEFAULT COMMON NAMES IF REQUIRED FOR CERTAIN APPLICATIONS
+#
+# DEFAULT COMMON NAMING FORMAT IS: <bd/epg>_<application>_<function>_<environment> (AFE FORMAT)
+###########################################################################################################
+
+- name: OVERWRITE COMMON NAMES FOR MSSQLV1 CASE TO AEF
+  when: "'mssqlv1' in application"
+  block:
+
+    - name: SET BD/EPG/ANP NAMES FOR MSSQLV1
+      ansible.builtin.set_fact:
+        # SET NAMES TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
+        # FOR INSTANCE: epg_mssqlv1_prd_sdipsql9999
+        bd_name: "bd_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }}"
+        epg_name: "epg_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }}"
+        # SET CORRECT ANP TO USE FOR MSSQLV1
+        anp_name: "anp_mssqlv1_dbserver"
+
+    - name: SET FIREWALL OBJECT NAME FOR MSSQLV1
+      ansible.builtin.set_fact:
+      # SET FIREWALL OBJECT NAME TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
+        obj_name: "bd_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }} - {{ subnet | replace('/','_') }}"
+      when: subnet is defined and subnet is not none and subnet | length > 0
+
+#- name: OVERWRITE COMMON NAMES FOR OPENSHIFT CASE TO AEF
+#  when: "'openshift' in application"
+#  block:
+#
+#    - name: SET BD/EPG/ANP NAMES FOR OPENSHIFT
+#      ansible.builtin.set_fact:
+#        # SET NAMES TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
+#        # FOR INSTANCE: epg_openshift_prd_master
+#        bd_name: "bd_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }}"
+#        epg_name: "epg_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }}"
+#        anp_name: "anp_{{ application }}"
+#
+#    - name: SET FIREWALL OBJECT NAME FOR OPENSHIFT
+#      ansible.builtin.set_fact:
+#      # SET FIREWALL OBJECT NAME TO <bd/epg>_<application>_<environment>_<function> (AEF FORMAT)
+#        obj_name: "bd_{{ application }}_{{ cust_environment }}{{ '_' + function if function is defined and function | length > 0 else '' }} - {{ subnet | replace('/','_') }}"
+#      when: subnet is defined and subnet is not none and subnet | length > 0
+#
+
+# THESE FUNCTIONS CHANGE WHICH ANP NAME TO USE IN CISCO ACI
+- name: OVERWRITE ACI ANP NAME FOR sdi_gitlab-runner
+  ansible.builtin.set_fact:
+    # SET CORRECT ANP TO USE FOR sdi_gitlab-runner
+    anp_name: "anp_sdi_gitlab-runners"
+  when: "'sdi_gitlab-runner' in application"
+
+- name: OVERWRITE ACI ANP NAME FOR oracleracv2
+  ansible.builtin.set_fact:
+    # SET CORRECT ANP TO USE FOR oracleracv2
+    anp_name: "anp_oracleracv2_database"
+  when: "'oracleracv2' in application"
+
+- name: OVERWRITE ACI ANP NAME FOR windows_beheer rds
+  ansible.builtin.set_fact:
+    # SET CORRECT ANP TO USE FOR RDS
+    # Make sure we only match 'rds' exactly and not birds, cards, records
+    anp_name: "anp_windows_beheer"
+  when: application == 'rds'
+
+# THESE FUNCTIONS CHANGE WHICH APPLICATION TO LOOKUP AS A NETWORK CONTAINER IN INFOBLOX
+- name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR MSSQLV1 AOC
+  ansible.builtin.set_fact:
+    # FORCE THE NETWORK CONTAINER TO USE TO mssqlv1_aoc
+    application_lookup: "mssqlv1_aoc"
+  when: "'mssqlv1' in application and 'aoc' in function"
+
+- name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR ASB
+  ansible.builtin.set_fact:
+    # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FUNCTION
+    application_lookup: "{{ application }}_{{ function }}"
+  when: application == 'asb'
+
+- name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR AAP
+  ansible.builtin.set_fact:
+    # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FUNCTION
+    application_lookup: "{{ application }}_{{ function }}"
+  when: application == 'aap'
+
+- name: OVERWRITE APPLICATION FOR NETWORK CONTAINER LOOKUP FOR GMI
+  # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FIRST 4
+  # CHARACTERS FROM FUNCTION USING VARIABLE SLICING FOR LVNL
+  # FOR INSTANCE: application: gmi + function: lvnlarch -> gmi_lvnl (application_function[:4])
+
+  # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FIRST 2
+  # CHARACTERS FROM FUNCTION USING VARIABLE SLICING FOR DT
+  # FOR INSTANCE: application: gmi + function: dtarch -> gmi_dt (application_function[:2])
+
+  # FORCE THE NETWORK CONTAINER TO USE TO A COMBINATION OF APPLICATION + FIRST 3
+  # CHARACTERS FROM FUNCTION USING VARIABLE SLICING FOR OTHERS
+  # FOR INSTANCE: application: gmi + function: prkarch -> gmi_prk (application_function[:3])
+  ansible.builtin.set_fact:
+    application_lookup: >-
+      {{ application }}_{{
+        (function[:4] if 'lvnl' in function else
+         function[:2] if 'dt' in function else
+         function[:3])
+      }}
+  when: "'gmi' in application"

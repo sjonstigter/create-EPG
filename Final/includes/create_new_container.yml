@@ -1,0 +1,26 @@
+- name: RETURN NEXT AVAILABLE IP SUBNET FROM PARENT NETWORK CONTAINER
+  ansible.builtin.set_fact:
+    containeraddr: "{{ lookup('infoblox.nios_modules.nios_next_network', tenant_container[tenant], cidr=24, provider=nios_provider) }}"
+
+- name: SHOW NEW CONTAINER
+  ansible.builtin.debug:
+    var: containeraddr
+
+- name: CREATE NEW NETWORK CONTAINER
+  infoblox.nios_modules.nios_network:
+    network: "{{ containeraddr[0] }}" # Dereference the returned list to a string by adding [0]
+    comment: "{{ application_lookup | default(application) }}"
+    container: true
+    extattrs:
+      subnet-ID: "{{ (max_subnet.extattrs['subnet-ID'] | default(0)) | int + 1 }}"
+      env: "{{ cust_environment }}"
+    state: present
+    provider: "{{ nios_provider }}"
+
+# Option disabled - reverse lookup zone already created on /16 networks
+#- name: CREATE REVERSE LOOKUP ZONE FOR NEW CONTAINER
+#  infoblox.nios_modules.nios_zone:
+#    name: "{{ containeraddr[0] }}"
+#    zone_format: IPV4
+#    state: present
+#    provider: "{{ nios_provider }}"

@@ -1,0 +1,194 @@
+---
+###########################################################################################################
+# Create Infoblox network
+###########################################################################################################
+#
+# This playbook performs the following steps:
+# - Lookup the Infoblox network container for the requested application.
+# - If the requested application has no network container a new Infoblox network container will be created
+#   (/24 network container).
+# - Filter the application network containers per requested environment (dev, tst, acc, prd).
+# - If the application has no network container for the requested environment (dev, tst, acc, prd) a new
+#   Infoblox network container for the application + environment will be created.
+# - Request a new network from the application network container with the specified subnetmask size.
+# - If the network container does not have enough space left to register the new network with the requested
+#   subnetmask size (ie if the network container is full) a new Infoblox network container for the
+#   application is created.
+# - Finally it registers a new network for the application in the selected network container with the
+#   requested subnetmask size.
+#
+# Requirements:
+# - Python infoblox-client module (pip install infoblox-client)
+# - infoblox.nios_modules ansible module (ansible-galaxy collection install infoblox.nios_modules)
+#
+###########################################################################################################
+- hosts: nios
+  connection: local
+  name: ALLOCATE INFOBLOX SUBNET
+
+  vars:
+    nios_provider:
+      host: "{{ inventory_hostname }}"
+      username: "{{ lookup('env', 'ANSIBLE_NET_USERNAME') }}"
+      password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
+      ssl_verify: false
+    bd_name: "bd_{{ application }}{{ '_' + function if function is defined and function | length > 0 else '' }}_{{ cust_environment }}"
+
+    tenant_container:
+      shg: "10.221.0.0/16"
+      common: "10.229.0.0/16"
+
+  tasks:
+    - name: LOAD SDIW EPG_DEFINITIONS YAML STRING INTO DICTIONNARY
+      ansible.builtin.set_fact:
+        parsed_epg_definitions: "{{ epg_definitions | from_yaml }}"
+      when: vars.get('epg_definitions', None) is not none
+
+    - name: EXTRACT EPG_DEFINITIONS FROM SDIW FLOW
+      ansible.builtin.set_fact:
+        tenant: "{{ parsed_epg_definitions[0].epg_tenant | lower }}"
+        application: "{{ parsed_epg_definitions[0].epg_application | lower }}"
+        function: "{{ parsed_epg_definitions[0].epg_function | default('') | lower }}"
+        cust_environment: "{{ parsed_epg_definitions[0].epg_envtype | lower }}"
+        os: "{{ parsed_epg_definitions[0].epg_os | lower }}"
+        vmm_domain: "{{ parsed_epg_definitions[0].epg_vmm_domain | lower }}"
+        subnetmask: "{{ parsed_epg_definitions[0].epg_subnetmask | int }}"
+        toolserver: "{{ parsed_epg_definitions[0].epg_toolserver }}"
+        loadbalancer: "{{ parsed_epg_definitions[0].epg_loadbalancer }}"
+        dhcp: "{{ parsed_epg_definitions[0].epg_dhcp }}"
+      when: vars.get('epg_definitions', None) is not none
+
+    - name: FAIL IF MANDATORY VARS ARE MISSING
+      ansible.builtin.fail:
+        msg: "One or more required variables are undefined!"
+      when: >
+        tenant is not defined or
+        application is not defined or
+        cust_environment is not defined or
+        os is not defined or
+        vmm_domain is not defined or
+        subnetmask is not defined or
+        toolserver is not defined or
+        loadbalancer is not defined or
+        dhcp is not defined
+
+    - name: INCLUDE SPECIAL CASE FOR FORMAT OVERIDES
+      ansible.builtin.include_tasks: includes/overwrite_common_names.yml
+
+    - name: INCLUDE SPECIAL CASE FOR TOOLSERVER REQUEST
+      ansible.builtin.include_tasks: includes/create_new_toolserver_network.yml
+      when: toolserver|default(false)|bool
+
+    - name: INCLUDE SPECIAL CASE FOR STATIC NETWORK
+      ansible.builtin.include_tasks: includes/create_new_static_network.yml
+      when: staticnetwork is defined and staticnetwork is not none and staticnetwork | length > 0
+
+    - name: GET NETWORK CONTAINERS FOR REQUESTED APPLICATION
+      ansible.builtin.set_fact:
+        network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application_lookup | default(application)}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+    - name: DEBUG APPLICATION NETWORK CONTAINER RESULT
+      ansible.builtin.debug:
+        var: network_container_result
+
+    - name: CREATE APPLICATION CONTAINER IF NONE EXISTS
+      when: network_container_result | length == 0
+      block:
+
+        - name: CREATE NEW APPLICATION NETWORK CONTAINER
+          ansible.builtin.include_tasks: includes/create_new_container.yml
+
+        - name: RERUN LOOKUP AFTER NEW APPLICATION NETWORK CONTAINER CREATED
+          ansible.builtin.set_fact:
+            network_container_result: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application_lookup | default(application)}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) }}"
+
+        - name: DEBUG APPLICATION NETWORK CONTAINER RESULT AFTER CREATION
+          ansible.builtin.debug:
+            var: network_container_result
+
+    - name: FILTER CONTAINERS BY ENVIRONMENT
+      ansible.builtin.set_fact:
+        env_network_containers: "{{ network_container_result | selectattr('extattrs.env', 'search', cust_environment) | list }}"
+
+    - name: DEBUG ENVIRONMENT NETWORK CONTAINERS
+      ansible.builtin.debug:
+        var: env_network_containers
+
+    - name: CREATE NETWORK CONTAINER IF NO ENVIRONMENT-SPECIFIC EXISTS
+      when: env_network_containers | length == 0
+      block:
+
+        - name: CREATE NEW ENVIRONMENT-SPECIFIC NETWORK CONTAINER
+          ansible.builtin.include_tasks: includes/create_new_container.yml
+
+        - name: RERUN LOOKUP AFTER NEW ENVIRONMENT NETWORK CONTAINER CREATED
+          ansible.builtin.set_fact:
+            env_network_containers: "{{ lookup('infoblox.nios_modules.nios_lookup', 'networkcontainer', filter={'comment': application_lookup | default(application)}, return_fields=['extattrs', 'network', 'comment'], provider=nios_provider, wantlist=True) | selectattr('extattrs.env', 'equalto', cust_environment) | list }}"
+
+        - name: DEBUG ENVIRONMENT NETWORK CONTAINERS AFTER CREATION
+          ansible.builtin.debug:
+            var: env_network_containers
+
+    - name: SELECT NETWORK CONTAINER WITH HIGHEST SUBNET-ID
+      ansible.builtin.set_fact:
+        max_subnet: "{{ env_network_containers | sort(attribute='extattrs.subnet-ID', reverse=True) | first }}"
+
+    - name: DEBUG SELECTED CONTAINER
+      ansible.builtin.debug:
+        var: max_subnet
+
+    - name: REQUEST NEW SUBNET FROM NETWORK CONTAINER
+      block:
+
+        - name: GET NEXT AVAILABLE SUBNET FROM SELECTED NETWORK CONTAINER
+          ansible.builtin.set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', max_subnet.network, cidr=subnetmask|int, provider=nios_provider, errors='ignore') }}"
+
+        - name: DEBUG SUBNET LOOKUP RESULT
+          ansible.builtin.debug:
+            var: networkaddr
+
+        - name: HANDLE NETWORK CONTAINER FULL CONDITION
+          ansible.builtin.set_fact:
+            subnet_full: true
+          when: networkaddr | length == 0 or networkaddr is not defined
+
+      rescue:
+        - name: SET SUBNET FULL IN CASE OF ERROR
+          ansible.builtin.set_fact:
+            subnet_full: true
+
+    - name: CREATE NEW CONTAINER AND GET SUBNET IF CONTAINER IS FULL
+      when: subnet_full | default(false)
+      block:
+
+        - name: CREATE NEW NETWORK CONTAINER
+          ansible.builtin.include_tasks: includes/create_new_container.yml
+
+        - name: GET NEXT AVAILABLE SUBNET FROM NEWLY CREATED CONTAINER
+          ansible.builtin.set_fact:
+            networkaddr: "{{ lookup('infoblox.nios_modules.nios_next_network', containeraddr[0], cidr=subnetmask|int, provider=nios_provider) }}"
+
+        - name: DEBUG NEW SUBNET ADDRESS
+          ansible.builtin.debug:
+            var: networkaddr
+
+    - name: SHOW ALLOCATED SUBNET
+      ansible.builtin.debug:
+        var: networkaddr
+
+    - name: CREATE NEW IPV4 NETWORK
+      infoblox.nios_modules.nios_network:
+        network: "{{ networkaddr[0] }}"
+        comment: "{{ bd_name }}"
+        template: "onead_{{ subnetmask|int }}{% if not ( dhcp | bool ) %}_nodhcp{% endif %}"
+        state: present
+        provider: "{{ nios_provider }}"
+
+    - name: STORE SUBNET IN ANSIBLE STATS
+      ansible.builtin.set_stats:
+        data:
+          subnet: "{{ networkaddr[0] }}"
+
+    - name: RESTART INFOBLOX SERVICES INCLUDE
+      ansible.builtin.include_tasks: includes/restart-infoblox-services.yml
