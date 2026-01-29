@@ -256,7 +256,7 @@
 
                 - name: Find tag based on input variable - Detect environment from epg name
                   ansible.builtin.set_fact:
-                    env_tag: "{{ (source_object[0].split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
+                    env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
 
             - name: Create proxy rule
               paloaltonetworks.panos.panos_security_rule:
