@@ -264,7 +264,12 @@
                 device_group: "ss-external"
                 rule_name: "{{ source_object[0].split(' - ')[0] }} to web"
                 description: "{{ source_object[0].split(' - ')[0] }} to web"
-                #tag_name: ['production'] # TODO: See if we can find our application tags
+                tag_name: >-
+                  {{
+                    ['sddc - automated']
+                    + ([env_tag] if (env_tag | default('') | string | trim | length) > 0 else [])
+                    + ([tag_object | first] if (tag_object | default([]) | length) > 0 else [])
+                  }}
                 source_zone: ['all']
                 source_ip: "{{ source_object[0] }}"
                 destination_zone: ['all']
