@@ -270,6 +270,7 @@
                     + ([env_tag] if (env_tag | default('') | string | trim | length) > 0 else [])
                     + ([tag_object | first] if (tag_object | default([]) | length) > 0 else [])
                   }}
+                group-tag: "{{ (tag_object | default([]) | first | default('')) | string | trim }}"
                 source_zone: ['all']
                 source_ip: "{{ source_object[0] }}"
                 destination_zone: ['all']
