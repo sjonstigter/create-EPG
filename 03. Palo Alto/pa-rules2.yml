@@ -52,6 +52,7 @@
 
     - name: Validate Palo Alto URL list entries
       # This function checks if the URL's provided in the request_url_list URL list are valid Palo Alto accepted URL's
+      when: validate_url
       block:
 
         - name: Validate Palo Alto URL list entries [1/5] - Initialize lists
@@ -90,8 +91,6 @@
             msg: |
               Valid Palo Alto URLs:
               {{ valid_urls | to_nice_yaml }}
-
-      when: validate_url
 
     - name: Find firewall object based on input variable [1/4] - Strip bd_ or epg_ from input epg_name variable
       ansible.builtin.set_fact:
@@ -151,6 +150,7 @@
           {{ uc_name in gathered_categories.gathered | map(attribute='name') | list }}
 
     - name: Add URL to named URL category and set commit
+      when: url_category_exists    
       block:
 
         - name: Add URL to standard named URL category (MERGED)
@@ -165,10 +165,9 @@
             commit: true
           when: perform_commit
 
-      when: url_category_exists
-
     - name: Query security rules for URL category
       # If no standard named URL category is found (not exists), query security rules for URL category
+      when: not url_category_exists
       block:
 
         - name: Get all security rules from the device
@@ -200,13 +199,13 @@
             var: filtered_rules
           when: debug
 
-      when: not url_category_exists
-
     - name: Add URL to a new URL category or existing category extracted from security rules
+      when: not url_category_exists
       block:
 
         - name: Create proxy rule if no existing rule is found
           # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
+          when: filtered_rules is not defined or filtered_rules | length == 0
           block:
 
             - name: Create a new URL category with requested URL
@@ -338,10 +337,9 @@
                 push: true
               when: perform_commit
 
-          when: filtered_rules is not defined or filtered_rules | length == 0
-
         - name: If a proxy rule is found then retrieve URL category and add URL to that URL category
           # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
+          when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
           block:
 
             - name: Initialize list of categories
@@ -374,10 +372,6 @@
               ansible.builtin.set_fact:
                 commit: true
               when: perform_commit
-
-          when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
-
-      when: not url_category_exists
 
     - name: Commit changes by ansible user when commit is needed + CHECK PUSH!
       # Commit changes when commit flag has been set
