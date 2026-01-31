@@ -38,6 +38,7 @@
     perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
     debug: false # set to true to show extra debug information
     lookup_tags: true # set to true to attempt policy rule tag lookup
+    conditional_rule_placement: true # set to true to attempt placing new rules in conditional order
     provider:
       ip_address: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
@@ -255,21 +256,28 @@
                         | map(attribute='name')
                         | list }}
 
-                - name: Find tag based on input variable - Detect environment from epg name
-                  ansible.builtin.set_fact:
-                    env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
+                    - name: Find tag based on input variable - Detect environment from epg name
+                      ansible.builtin.set_fact:
+                        env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
 
-                - name: EXP Filter rules with a group_tag matching tag object
-                  ansible.builtin.set_fact:
-                    tag_filtered_rules: >-
-                      {{
-                        security_rules.gathered
-                        | selectattr('group_tag', 'defined')
-                        | selectattr('group_tag', 'contains', (tag_object | first))
-                        | list
-                      }}
+                - name: Find tag based on input variable
+                  when: conditional_rule_placement
+                  block:
 
-                - name: EXP Get last rule name from tag_filtered_rules
+                    - name: EXP Filter rules get all the rules with a group_tag matching tag object
+                      ansible.builtin.set_fact:
+                        tag_filtered_rules: >-
+                          {{
+                            security_rules.gathered
+                            | rejectattr('group_tag', 'equalto', none)
+                            | selectattr('group_tag', 'equalto', (tag_object | first))
+                            | list
+                          }}
+                      when:
+                        - tag_object is defined
+                        - (tag_object | length) > 0
+
+                - name: EXP Get the last rule name from tag_filtered_rules list
                   ansible.builtin.set_fact:
                     last_rule_name: "{{ (tag_filtered_rules | last).name }}"
                   when: tag_filtered_rules | length > 0
