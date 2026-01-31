@@ -31,7 +31,7 @@
 - name: Palo Alto proxy URL access
   hosts: "panorama"
   connection: local
-  gather_facts: False
+  gather_facts: false
 
   vars:
     validate_url: true # set to true to validate if URL's are according to Palo Alto required format
