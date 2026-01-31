@@ -282,7 +282,7 @@
                         last_rule_name: "{{ (tag_filtered_rules | last).rule_name }}"
                       when: (tag_filtered_rules | length) > 0
 
-            - name: Create proxy rule (no explicit placement)
+            - name: Create proxy security rule (no explicit placement)
               paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
                 device_group: "ss-external"
@@ -304,7 +304,7 @@
                 action: 'allow'
               when: (last_rule_name | default('') | string | trim | length) == 0
 
-            - name: Create proxy rule (place after {{ last_rule_name }})
+            - name: Create proxy security rule (place after rule {{ last_rule_name }})
               paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
                 device_group: "ss-external"
