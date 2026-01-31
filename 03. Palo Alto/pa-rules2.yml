@@ -257,7 +257,7 @@
 
                 - name: Find tag based on input variable - Detect environment from epg name
                   ansible.builtin.set_fact:
-                    env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd', 'ota']) | first) | default('') }}"
+                    env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd','ota']) | first) | default('') }}"
 
                 - name: Attempt explicit rule placement
                   when: explicit_rule_placement
