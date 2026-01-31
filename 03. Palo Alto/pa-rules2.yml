@@ -276,7 +276,7 @@
                         - tag_object is defined
                         - (tag_object | length) > 0
 
-                    - name: Attempt explicit rule placement [2/2] - Get the last rule name from tag_filtered_rules list
+                    - name: Attempt explicit rule placement [2/2] - Get the rule name for the last rule in tag_filtered_rules list
                       ansible.builtin.set_fact:
                         last_rule_name: "{{ (tag_filtered_rules | last).rule_name }}"
                       when: (tag_filtered_rules | length) > 0
