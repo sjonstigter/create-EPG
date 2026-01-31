@@ -38,7 +38,7 @@
     perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
     debug: false # set to true to show extra debug information
     lookup_tags: true # set to true to attempt policy rule tag lookup
-    explicit_rule_placement: true # set to true to attempt placing new rules in conditional order
+    explicit_rule_placement: true # set to true to attempt placing new rules in explicit order (requires lookup_tags to be true)
     provider:
       ip_address: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
