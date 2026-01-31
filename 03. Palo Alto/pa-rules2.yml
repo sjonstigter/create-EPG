@@ -277,10 +277,10 @@
                         - tag_object is defined
                         - (tag_object | length) > 0
 
-                - name: EXP Get the last rule name from tag_filtered_rules list
-                  ansible.builtin.set_fact:
-                    last_rule_name: "{{ (tag_filtered_rules | last).name }}"
-                  when: tag_filtered_rules | length > 0
+                    - name: EXP Get the last rule name from tag_filtered_rules list
+                      ansible.builtin.set_fact:
+                        last_rule_name: "{{ (tag_filtered_rules | last).rule_name }}"
+                      when: (tag_filtered_rules | length) > 0
 
             - name: Create proxy rule
               paloaltonetworks.panos.panos_security_rule:
