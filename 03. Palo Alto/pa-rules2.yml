@@ -302,7 +302,7 @@
                 service: ['service-https']
                 category: "{{ uc_name }}"
                 action: 'allow'
-              when: (last_rule_name | default('') | trim) == '
+              when: (last_rule_name | default('') | string | trim | length) == 0
 
             - name: Create proxy rule (place after {{ last_rule_name }})
               paloaltonetworks.panos.panos_security_rule:
@@ -326,7 +326,7 @@
                 action: 'allow'
                 location: 'after'
                 existing_rule: "{{ last_rule_name }}"
-              when: (last_rule_name | default('') | trim) != ''
+              when: (last_rule_name | default('') | string | trim | length) > 0
 
             - name: Set commit needed to true
               ansible.builtin.set_fact:
