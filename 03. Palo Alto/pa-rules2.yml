@@ -38,7 +38,7 @@
     perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
     debug: false # set to true to show extra debug information
     lookup_tags: true # set to true to attempt policy rule tag lookup
-    conditional_rule_placement: true # set to true to attempt placing new rules in conditional order
+    explicit_rule_placement: true # set to true to attempt placing new rules in conditional order
     provider:
       ip_address: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
@@ -260,11 +260,11 @@
                   ansible.builtin.set_fact:
                     env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
 
-                - name: Attempt conditional rule placement
-                  when: conditional_rule_placement
+                - name: Attempt explicit rule placement
+                  when: explicit_rule_placement
                   block:
 
-                    - name: EXP Filter rules get all the rules with a group_tag matching tag object
+                    - name: Attempt explicit rule placement [1/2] - Filter rules get all the rules with a group_tag matching tag object
                       ansible.builtin.set_fact:
                         tag_filtered_rules: >-
                           {{
@@ -277,12 +277,12 @@
                         - tag_object is defined
                         - (tag_object | length) > 0
 
-                    - name: EXP Get the last rule name from tag_filtered_rules list
+                    - name: Attempt explicit rule placement [2/2] - Get the last rule name from tag_filtered_rules list
                       ansible.builtin.set_fact:
                         last_rule_name: "{{ (tag_filtered_rules | last).rule_name }}"
                       when: (tag_filtered_rules | length) > 0
 
-            - name: Create proxy rule
+            - name: Create proxy rule (no explicit placement)
               paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
                 device_group: "ss-external"
@@ -302,6 +302,31 @@
                 service: ['service-https']
                 category: "{{ uc_name }}"
                 action: 'allow'
+              when: (last_rule_name | default('') | trim) == '
+
+            - name: Create proxy rule (place after {{ last_rule_name }})
+              paloaltonetworks.panos.panos_security_rule:
+                provider: "{{ provider }}"
+                device_group: "ss-external"
+                rule_name: "{{ source_object[0].split(' - ')[0] }} to web"
+                description: "{{ source_object[0].split(' - ')[0] }} to web"
+                tag_name: >-
+                  {{
+                    ['sddc - automated']
+                    + ([env_tag] if (env_tag | default('') | string | trim | length) > 0 else [])
+                    + ([tag_object | first] if (tag_object | default([]) | length) > 0 else [])
+                  }}
+                group_tag: "{{ (tag_object | default([]) | first | default('')) | string | trim }}"
+                source_zone: ['all']
+                source_ip: "{{ source_object[0] }}"
+                destination_zone: ['all']
+                destination_ip: ['any']
+                service: ['service-https']
+                category: "{{ uc_name }}"
+                action: 'allow'
+                location: 'after'
+                existing_rule: "{{ last_rule_name }}"
+              when: (last_rule_name | default('') | trim) != ''
 
             - name: Set commit needed to true
               ansible.builtin.set_fact:
