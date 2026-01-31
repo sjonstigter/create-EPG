@@ -259,6 +259,21 @@
                   ansible.builtin.set_fact:
                     env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
 
+                - name: EXP Filter rules with a group_tag matching tag object
+                  ansible.builtin.set_fact:
+                    tag_filtered_rules: >-
+                      {{
+                        security_rules.gathered
+                        | selectattr('group_tag', 'defined')
+                        | selectattr('group_tag', 'contains', (tag_object | first))
+                        | list
+                      }}
+
+                - name: EXP Get last rule name from tag_filtered_rules
+                  ansible.builtin.set_fact:
+                    last_rule_name: "{{ (tag_filtered_rules | last).name }}"
+                  when: tag_filtered_rules | length > 0
+
             - name: Create proxy rule
               paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
