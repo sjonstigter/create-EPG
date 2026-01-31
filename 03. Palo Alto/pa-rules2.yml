@@ -203,6 +203,42 @@
       when: not url_category_exists
       block:
 
+        - name: If a proxy rule is found then retrieve URL category and add URL to that URL category
+          # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
+          when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
+          block:
+
+            - name: Initialize list of categories
+              ansible.builtin.set_fact:
+                url_categories: []
+
+            - name: Append category to list
+              ansible.builtin.set_fact:
+                url_categories: "{{ url_categories + [item.category | join(', ')] }}"
+              loop: "{{ filtered_rules }}"
+
+            - name: DEBUG - Display all categories
+              ansible.builtin.debug:
+                var: url_categories
+              when: debug
+
+            - name: Fail if more than one URL category is found for our source object
+              ansible.builtin.fail:
+                msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
+              when: url_categories | length > 1
+
+            - name: Add URL to retrieved URL category using merged state
+              paloaltonetworks.panos.panos_custom_url_category:
+                provider: "{{ provider }}"
+                name: "{{ url_categories[0] }}"
+                url_value: "{{ request_url_list }}"
+                state: "merged"
+
+            - name: Set commit needed to true
+              ansible.builtin.set_fact:
+                commit: true
+              when: perform_commit
+
         - name: Create proxy rule if no existing rule is found
           # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
           when: filtered_rules is not defined or filtered_rules | length == 0
@@ -335,42 +371,6 @@
             - name: Set push needed to true
               ansible.builtin.set_fact:
                 push: true
-              when: perform_commit
-
-        - name: If a proxy rule is found then retrieve URL category and add URL to that URL category
-          # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
-          when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
-          block:
-
-            - name: Initialize list of categories
-              ansible.builtin.set_fact:
-                url_categories: []
-
-            - name: Append category to list
-              ansible.builtin.set_fact:
-                url_categories: "{{ url_categories + [item.category | join(', ')] }}"
-              loop: "{{ filtered_rules }}"
-
-            - name: DEBUG - Display all categories
-              ansible.builtin.debug:
-                var: url_categories
-              when: debug
-
-            - name: Fail if more than one URL category is found for our source object
-              ansible.builtin.fail:
-                msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
-              when: url_categories | length > 1
-
-            - name: Add URL to retrieved URL category using merged state
-              paloaltonetworks.panos.panos_custom_url_category:
-                provider: "{{ provider }}"
-                name: "{{ url_categories[0] }}"
-                url_value: "{{ request_url_list }}"
-                state: "merged"
-
-            - name: Set commit needed to true
-              ansible.builtin.set_fact:
-                commit: true
               when: perform_commit
 
     - name: Commit changes by ansible user when commit is needed + CHECK PUSH!
