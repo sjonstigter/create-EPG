@@ -183,13 +183,14 @@
             var: security_rules
           when: debug
 
-        - name: Filter rules with source object "{{ source_object }}"
+        - name: Filter rules with source object "{{ source_object | first }}"
           ansible.builtin.set_fact:
             filtered_rules: >-
  #             {{
- #               security_rules.gathered | selectattr('source_ip', 'defined')
- #                                   | selectattr('source_ip', 'contains', source_object)
- #                                   | list
+ #               security_rules.gathered 
+ #               | selectattr('source_ip', 'defined')
+ #               | selectattr('source_ip', 'contains', source_object)
+ #               | list
  #             }}
               {{
                 security_rules.gathered
