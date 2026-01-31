@@ -256,11 +256,11 @@
                         | map(attribute='name')
                         | list }}
 
-                    - name: Find tag based on input variable - Detect environment from epg name
-                      ansible.builtin.set_fact:
-                        env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
+                - name: Find tag based on input variable - Detect environment from epg name
+                  ansible.builtin.set_fact:
+                    env_tag: "{{ (epg_name.split('_') | intersect(['dev','tst','acc','prd']) | first) | default('') }}"
 
-                - name: Find tag based on input variable
+                - name: Attempt conditional rule placement
                   when: conditional_rule_placement
                   block:
 
