@@ -24,7 +24,7 @@
 #    - If no security rule is found for source_object then a new URL category and security rule are created
 #      using standard URL category name as we can safely assume the service has no proxy access yet
 #    - If a security rule is found for the source_object, extract the used URL category and add URL to it
-#      Abort if we find more than one URL category on the security rule - Non-deterministic condition!!
+#      Abort if we find more than one URL category on the security rule - Non-deterministic condition!
 #
 ###########################################################################################################
 
@@ -36,25 +36,31 @@
   vars:
     validate_url: true # set to true to validate if URL's are according to Palo Alto required format
     perform_commit: true # set to false if you do not want the playbook to perform actual Panorama commits
-    debug: true # set to true to show extra debug information
-    lookup_tags: true # set to true to attempt tag lookups
+    debug: false # set to true to show extra debug information
+    lookup_tags: true # set to true to attempt policy rule tag lookup - EXPERIMENTAL
+    explicit_rule_placement: true # set to true to attempt placing new rules in explicit order (requires lookup_tags to be true) - EXPERIMENTAL
     provider:
       ip_address: "{{ inventory_hostname }}"
       username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
+    - name: Convert input URL list string to list if needed
+      ansible.builtin.set_fact:
+        request_url_list: "{{ url_list | from_yaml }}"
+      when: url_list is string
+
     - name: Validate Palo Alto URL list entries
-      when: validate_url
       # This function checks if the URL's provided in the request_url_list URL list are valid Palo Alto accepted URL's
+      when: validate_url
       block:
 
-        - name: Validate Palo Alto URL list entries - Initialize lists
+        - name: Validate Palo Alto URL list entries [1/5] - Initialize lists
           ansible.builtin.set_fact:
             valid_urls: []
             invalid_urls: []
 
-        - name: Validate Palo Alto URL list entries - Categorize URLs
+        - name: Validate Palo Alto URL list entries [2/5] - Categorize URLs
           vars:
             # Checks to run against URL while looping through request_url_list
             starts_with_protocol: "{{ item.startswith('http://') or item.startswith('https://') }}" # URL cannot begin with protocol like http(s)
@@ -69,18 +75,18 @@
             label: "{{ item }}"
           when: not (starts_with_protocol or has_invalid_chars or is_ip or not caret_ok)
 
-        - name: Validate Palo Alto URL list entries - Collect invalid URLs
+        - name: Validate Palo Alto URL list entries [3/5] - Collect invalid URLs
           ansible.builtin.set_fact:
             invalid_urls: "{{ request_url_list | difference(valid_urls) }}"
 
-        - name: Validate Palo Alto URL list entries - Fail if invalid URLs exist
+        - name: Validate Palo Alto URL list entries [4/5] - Fail if invalid URLs exist
           ansible.builtin.fail:
             msg: |
               Invalid Palo Alto URLs found:
               {{ invalid_urls | to_nice_yaml }}
           when: invalid_urls | length > 0
 
-        - name: Validate Palo Alto URL list entries - Show valid URLs
+        - name: Validate Palo Alto URL list entries [5/5] - Show valid URLs
           ansible.builtin.debug:
             msg: |
               Valid Palo Alto URLs:
@@ -121,7 +127,7 @@
       ansible.builtin.set_fact:
         original_uc_name: "{{ 'uc_' + source_object[0].split(' - ')[0] }}"
 
-    - name: Handle Palo Alto field limit [2/3]- Truncate uc_name to max 31 characters
+    - name: Handle Palo Alto field limit [2/3] - Truncate uc_name to max 31 characters
       ansible.builtin.set_fact:
         uc_name: "{{ original_uc_name[:31] }}"
 
@@ -165,8 +171,8 @@
           when: perform_commit
 
     - name: Query security rules for URL category
-      when: not url_category_exists
       # If no standard named URL category is found (not exists), query security rules for URL category
+      when: not url_category_exists
       block:
 
         - name: Get all security rules from the device
@@ -182,13 +188,14 @@
             var: security_rules
           when: debug
 
-        - name: Filter rules with source object "{{ source_object }}"
+        - name: Filter rules with source object "{{ source_object | first }}"
           ansible.builtin.set_fact:
             filtered_rules: >-
               {{
-                security_rules.gathered | selectattr('source_ip', 'defined')
-                                    | selectattr('source_ip', 'contains', source_object)
-                                    | list
+                security_rules.gathered
+                | selectattr('source_ip', 'defined')
+                | selectattr('source_ip', 'contains', (source_object | first))
+                | list
               }}
           # TODO: Check doc on source_ip vs source object
 
@@ -201,9 +208,50 @@
       when: not url_category_exists
       block:
 
+        - name: If a proxy rule is found then retrieve URL category and add URL to that URL category
+          # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
+          when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
+          block:
+
+            - name: Initialize list of categories
+              ansible.builtin.set_fact:
+                url_categories: []
+
+            - name: Append category to list
+              ansible.builtin.set_fact:
+                url_categories: "{{ url_categories + [item.category | join(', ')] }}"
+              loop: "{{ filtered_rules }}"
+
+            - name: DEBUG - Display all categories
+              ansible.builtin.debug:
+                var: url_categories
+              when: debug
+
+            - name: Fail if more than one URL category is found for our source object
+              ansible.builtin.fail:
+                msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
+              when: url_categories | length > 1
+
+            - name: Add URL to retrieved URL category using merged state
+              paloaltonetworks.panos.panos_custom_url_category:
+                provider: "{{ provider }}"
+                name: "{{ url_categories[0] }}"
+                url_value: "{{ request_url_list }}"
+                state: "merged"
+
+            - name: Set commit needed to true
+              ansible.builtin.set_fact:
+                commit: true
+              when: perform_commit
+
+            - name: Set push needed to true
+              ansible.builtin.set_fact:
+                push: true
+              when: perform_commit
+
         - name: Create proxy rule if no existing rule is found
-          when: filtered_rules is not defined or filtered_rules | length == 0
           # If no proxy security rule is found for the requested source object then create a new URL category and a new proxy firewall security rule
+          when: filtered_rules is not defined or filtered_rules | length == 0
           block:
 
             - name: Create a new URL category with requested URL
@@ -234,19 +282,18 @@
               when: lookup_tags
               block:
 
-                - name: Find tag based on input variable [1/4 ]- Get our application name from the EPG name
-                  # This function extracts the second word from the object name as name for the application, eg myapp1 from bd_myapp1_webserver_prd
+                - name: Find tag based on input variable - Get our application name from the EPG name
                   ansible.builtin.set_fact:
                     tag_object_name: "{{ source_object[0].split('_')[1] }}"
 
-                - name: Find tag based on input variable [2/4] - Get tag objects from Panorama
+                - name: Find tag based on input variable - Get tag objects from Panorama
                   paloaltonetworks.panos.panos_tag_object:
                     provider: "{{ provider }}"
                     state: 'gathered'
                     gathered_filter: '*'
                   register: gathered_tag_objects
 
-                - name: Find tag based on input variable [3/4] - Search for tag object
+                - name: Find tag based on input variable - Search for tag object
                   ansible.builtin.set_fact:
                     tag_object: >-
                       {{ gathered_tag_objects.gathered
@@ -254,12 +301,33 @@
                         | map(attribute='name')
                         | list }}
 
-                - name: Find tag based on input variable [4/4] - Detect environment tag from epg name
-                  # This function checks for the occurance of dev,tst,acc or prd in the EPG name
+                - name: Find tag based on input variable - Detect environment from epg name
                   ansible.builtin.set_fact:
-                    env_tag: "{{ (epg_name.split('_') | intersect(['dev', 'tst', 'acc', 'prd']) | first) | default('') }}"
+                    env_tag: "{{ (epg_name.split('_') | intersect(['dev', 'tst', 'acc', 'prd', 'ota']) | first) | default('') }}"
 
-            - name: Create proxy rule
+                - name: Attempt explicit rule placement
+                  when: explicit_rule_placement
+                  block:
+
+                    - name: Attempt explicit rule placement [1/2] - Filter rules get all the rules with a group_tag matching tag object
+                      ansible.builtin.set_fact:
+                        tag_filtered_rules: >-
+                          {{
+                            security_rules.gathered
+                            | rejectattr('group_tag', 'equalto', none)
+                            | selectattr('group_tag', 'equalto', (tag_object | first))
+                            | list
+                          }}
+                      when:
+                        - tag_object is defined
+                        - (tag_object | length) > 0
+
+                    - name: Attempt explicit rule placement [2/2] - Get the rule name for the last rule in tag_filtered_rules list
+                      ansible.builtin.set_fact:
+                        last_rule_name: "{{ (tag_filtered_rules | last).rule_name }}"
+                      when: (tag_filtered_rules | length) > 0
+
+            - name: Create proxy security rule (no explicit placement)
               paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
                 device_group: "SDDC Proxy"
@@ -277,52 +345,39 @@
                 destination_zone: ['proxy-external']
                 destination_ip: ['any']
                 service: ['tcp-443']
-                category: ['{{ uc_name }}']
+                category: "{{ uc_name }}"
                 group_profile: "sddc-strict-proxy-bp"
                 log_setting: "forward-to-panorama"
                 audit_comment: "AAP job ID: {{ awx_job_id | default('n/a') }} - ICD: {{ ticket_num | default('no-CR') }}"
                 action: 'allow'
+              when: (last_rule_name | default('') | string | trim | length) == 0
 
-            - name: Set commit needed to true
-              ansible.builtin.set_fact:
-                commit: true
-              when: perform_commit
-
-            - name: Set push needed to true
-              ansible.builtin.set_fact:
-                push: true
-              when: perform_commit
-
-        - name: If a proxy rule is found then retrieve URL category and add URL to that URL category
-          when: filtered_rules is defined and filtered_rules is not none and filtered_rules | length > 0
-          # If a proxy security rule is found then retrieve the URL category used on the rule and add the requested URL to the URL category list
-          block:
-
-            - name: Initialize list of categories
-              ansible.builtin.set_fact:
-                url_categories: []
-
-            - name: Append category to list
-              ansible.builtin.set_fact:
-                url_categories: "{{ url_categories + [item.category | join(', ')] }}"
-              loop: "{{ filtered_rules }}"
-
-            - name: DEBUG - Display all categories
-              ansible.builtin.debug:
-                var: url_categories
-              when: debug
-
-            - name: Fail if more than one URL category is found for our source object
-              ansible.builtin.fail:
-                msg: "More than one URL category found in rule, unable to determine which URL category list to use: {{ url_categories }}"
-              when: url_categories | length > 1
-
-            - name: Add URL to retrieved URL category using merged state
-              paloaltonetworks.panos.panos_custom_url_category:
+            - name: Create proxy security rule (place after rule {{ last_rule_name }})
+              paloaltonetworks.panos.panos_security_rule:
                 provider: "{{ provider }}"
-                name: "{{ url_categories[0] }}"
-                url_value: "{{ request_url_list }}"
-                state: "merged"
+                device_group: "SDDC Proxy"
+                rule_name: "{{ source_object[0].split(' - ')[0] }} to web"
+                description: "{{ source_object[0].split(' - ')[0] }} to web"
+                tag_name: >-
+                  {{
+                    ['sddc - automated']
+                    + ([env_tag] if (env_tag | default('') | string | trim | length) > 0 else [])
+                    + ([tag_object | first] if (tag_object | default([]) | length) > 0 else [])
+                  }}
+                group_tag: "{{ (tag_object | default([]) | first | default('')) | string | trim }}"
+                source_zone: ['proxy-loopback']
+                source_ip: "{{ source_object[0] }}"
+                destination_zone: ['proxy-external']
+                destination_ip: ['any']
+                service: ['tcp-443']
+                category: "{{ uc_name }}"
+                action: 'allow'
+                group_profile: "sddc-strict-proxy-bp"
+                log_setting: "forward-to-panorama"
+                audit_comment: "AAP job ID: {{ awx_job_id | default('n/a') }} - ICD: {{ ticket_num | default('no-CR') }}"
+                location: 'after'
+                existing_rule: "{{ last_rule_name }}"
+              when: (last_rule_name | default('') | string | trim | length) > 0
 
             - name: Set commit needed to true
               ansible.builtin.set_fact:
