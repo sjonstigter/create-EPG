@@ -192,6 +192,7 @@
         epg: "{{ epg_name }}"
         contract_master_ap: "anp_contract_masters"
         contract_master_epg: "epg_cm_{{ tenant }}_{{ os }}"
+      when: (os | lower) in ['windows', 'linux']
 
     - name: ADD INSTANCEMANAGER TO LB CONTRACT IF EPG IS LB
       cisco.aci.aci_epg_to_contract:
