@@ -45,9 +45,21 @@
       password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
 
   tasks:
-    - name: Convert input URL list string to list if needed
+#    - name: Convert input URL list string to list if needed
+#      ansible.builtin.set_fact:
+#        request_url_list: "{{ url_list | from_yaml }}"
+#      when: url_list is string
+
+    - name: Convert input URL list string to list if needed (handle YAML alias '*')
       ansible.builtin.set_fact:
-        request_url_list: "{{ url_list | from_yaml }}"
+        request_url_list: >-
+          {{
+            (
+              url_list
+              | regex_replace('(?m)^(\\s*-\\s*)(\\*.*)$', '\\1"\\2"')
+            )
+            | from_yaml
+          }}
       when: url_list is string
 
     - name: Validate Palo Alto URL list entries
