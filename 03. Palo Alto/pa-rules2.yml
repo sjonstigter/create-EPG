@@ -50,17 +50,22 @@
 #        request_url_list: "{{ url_list | from_yaml }}"
 #      when: url_list is string
 
-    - name: Convert input URL list string to list if needed (handle YAML alias '*')
+    - name: Convert input URL list string to list if needed (safe for '*' wildcards)
       ansible.builtin.set_fact:
         request_url_list: >-
           {{
             (
-              url_list
-              | regex_replace('(?m)^(\\s*-\\s*)(\\*.*)$', '\\1"\\2"')
+              url_list.splitlines()
+              | map('trim')
+              | select('match', '^-\s+')
+              | map('regex_replace', '^-\s+', '')
+              | map('trim')
+              | reject('equalto', '')
+              | list
             )
-            | from_yaml
+            if (url_list is string)
+            else (url_list | default([]))
           }}
-      when: url_list is string
 
     - name: Validate Palo Alto URL list entries
       # This function checks if the URL's provided in the request_url_list URL list are valid Palo Alto accepted URL's
