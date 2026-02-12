@@ -406,3 +406,10 @@
 #        name: "ss-external"
 #        description: "Push from Ansible orchestrator - Proxy"
 #      when: push
+
+    - name: Log lines to MS Teams
+      uri:
+        url: "https://default27776982d88241b295ac322f28d5a2.ce.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a0da2b1377fc4736aaa3f5c3cf45154c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=NuSN3JTWfw_sbqU2cKlH_molkbJ7qeSdPUlGBF29Cw4"
+        body: "Test automation alert message - SjS"
+        body_format: json
+        method: POST
