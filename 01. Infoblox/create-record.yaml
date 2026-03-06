@@ -1,0 +1,28 @@
+---
+- hosts: nios
+  connection: local
+  name: Create Infoblox records
+
+  vars:
+    nios_provider:
+      host: "{{ inventory_hostname }}"
+      username: "{{ lookup('env', 'ANSIBLE_NET_USERNAME') }}"
+      password: "{{ lookup('env', 'ANSIBLE_NET_PASSWORD') }}"
+      ssl_verify: false
+
+  tasks:
+    - name: Configure an A record
+      when: record_type == 'A'
+      infoblox.nios_modules.nios_a_record:
+        name: "{{ dns_name }}"
+        ipv4: "{{ ip_address }}"
+        state: present
+        provider: "{{ nios_provider }}"
+
+    - name: Configure a CNAME record
+      when: record_type == 'CNAME'
+      infoblox.nios_modules.nios_cname_record:
+        name: "{{ dns_name }}"
+        canonical: "{{ canonical_name }}"
+        state: present
+        provider: "{{ nios_provider }}"
