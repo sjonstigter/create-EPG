@@ -26,6 +26,7 @@
           - source_zones is defined
           - destination_zones is defined
           - applications is defined
+          - tags is defined
           - action is defined
         fail_msg: "One or more required extra_vars are missing."
 
@@ -132,6 +133,7 @@
           services:
             - "{{ service_name }}"
           categories: "{{ categories | default(['any']) }}"
+          tags: "{{ tags }}"
           action: "{{ action }}"
 
     - name: Merge service object into services list
