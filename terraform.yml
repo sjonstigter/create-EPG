@@ -217,6 +217,21 @@
         content: "{{ updated_policy_data | to_nice_yaml(indent=2, sort_keys=False) }}"
         mode: "0644"
 
+    - name: Run terraform init
+      ansible.builtin.command: terraform init
+      args:
+        chdir: "{{ terraform_root }}"
+    
+    - name: Run terraform plan
+      ansible.builtin.command: terraform plan -out=tfplan
+      args:
+        chdir: "{{ terraform_root }}"
+    
+    - name: Run terraform apply
+      ansible.builtin.command: terraform apply -auto-approve tfplan
+      args:
+        chdir: "{{ terraform_root }}"
+
     - name: Show updated files
       ansible.builtin.debug:
         msg:
