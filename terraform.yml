@@ -16,6 +16,7 @@
         that:
           - group_tag is defined
           - rule_name is defined
+          - device_group is defined
           - source_address_name is defined
           - source_address_value is defined
           - destination_address_name is defined
@@ -122,6 +123,7 @@
       ansible.builtin.set_fact:
         new_rule:
           name: "{{ rule_name }}"
+          device_group: "{{ device_group }}"
           source_zones: "{{ source_zones }}"
           source_addresses:
             - "{{ source_address_name }}"
