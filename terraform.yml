@@ -213,10 +213,21 @@
         content: "{{ updated_address_objects_data | to_nice_yaml(indent=2, sort_keys=False) }}"
         mode: "0644"
 
+#    - name: Write policy file
+#      ansible.builtin.copy:
+#        dest: "{{ policy_file }}"
+#        content: "{{ updated_policy_data | to_nice_yaml(indent=2, sort_keys=False) }}"
+#        mode: "0644"
+
     - name: Write policy file
       ansible.builtin.copy:
         dest: "{{ policy_file }}"
-        content: "{{ updated_policy_data | to_nice_yaml(indent=2, sort_keys=False) }}"
+        content: >-
+          {{
+            updated_policy_data
+            | to_nice_yaml(indent=2, sort_keys=False)
+            | regex_replace('\n- name:', '\n\n- name:')
+          }}
         mode: "0644"
 
     - name: Run terraform init
