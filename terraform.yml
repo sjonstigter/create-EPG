@@ -189,19 +189,19 @@
     - name: Build updated services data
       ansible.builtin.set_fact:
         updated_services_data:
-          services: "{{ merged_services | sort(attribute='name') }}"
+          services: "{{ merged_services }}"
 
     - name: Build updated address objects data
       ansible.builtin.set_fact:
         updated_address_objects_data:
-          address_objects: "{{ merged_address_objects | sort(attribute='name') }}"
+          address_objects: "{{ merged_address_objects }}"
 
     - name: Build updated policy data
       ansible.builtin.set_fact:
         updated_policy_data:
           group_tag: "{{ group_tag }}"
-          position_keyword: "{{ rulebase_position_keyword | default(policy_data.position_keyword | default('bottom')) }}"
-          rules: "{{ merged_rules | sort(attribute='name') }}"
+          # position_keyword: "{{ rulebase_position_keyword | default(policy_data.position_keyword | default('bottom')) }}"
+          rules: "{{ merged_rules }}"
 
     - name: Write services.yaml
       ansible.builtin.copy:
