@@ -16,7 +16,7 @@
       infoblox.nios_modules.nios_host_record:
         name: "{{ dns_name }}"
         ipv4:
-          - address: "{{ ip_address }}"
+          - address: "{{ ip_address | string }}"
         state: present
         provider: "{{ nios_provider }}"
 
