@@ -11,6 +11,14 @@
       ssl_verify: false
 
   tasks:
+    - name: Configure an ipv4 host record
+      when: record_type == 'host'
+      infoblox.nios_modules.nios_host_record:
+        name: "{{ dns_name }}"
+        ipv4: "{{ ip_address }}"
+        state: present
+        provider: "{{ nios_provider }}"
+
     - name: Configure an A record
       when: record_type == 'A'
       infoblox.nios_modules.nios_a_record:
