@@ -2,6 +2,7 @@
 - hosts: nios
   connection: local
   name: Create Infoblox records
+  gather_facts: false
 
   vars:
     nios_provider:
